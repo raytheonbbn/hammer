@@ -1,0 +1,37 @@
+HAMMER
+
+
+_________________________________________________________________
+PURPOSE AND CAPABILITIES
+
+Software acoustic modem ATAK plugin that allows sending of TAK data over voice comms
+
+
+_________________________________________________________________
+STATUS
+
+Beta
+
+_________________________________________________________________
+POINT OF CONTACTS
+
+Nate Soule (nate.soule@raytheon.com)
+
+_________________________________________________________________
+PORTS REQUIRED
+
+N/A
+
+_________________________________________________________________
+EQUIPMENT REQUIRED
+
+Voice capable radio (e.g., COTS walkie talkie)
+
+_________________________________________________________________
+EQUIPMENT SUPPORTED
+
+_________________________________________________________________
+COMPILATION
+
+_________________________________________________________________
+DEVELOPER NOTES

@@ -1,0 +1,15 @@
+apply plugin: 'groovy'
+
+repositories {
+    jcenter()
+    google()
+    mavenCentral()
+    maven {
+        url "https://jitpack.io"
+    }
+}
+dependencies {
+    compileOnly 'com.android.tools.build:gradle:3.6.3'
+    compileOnly 'org.codehaus.groovy:groovy-all:2.5.10'
+    compileOnly gradleApi()
+}

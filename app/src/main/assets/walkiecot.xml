@@ -1,0 +1,8 @@
+<set>
+    <broadcast>
+        <action>com.atakmap.android.cot_utility.receivers.cotMenu</action>
+        <extras>
+            <string key='targetUID'>${uid}</string>
+        </extras>
+    </broadcast>
+</set>

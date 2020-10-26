@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">HAMMER</string>
+    <!-- description -->
+    <string name="app_desc">Send and receive CoT messages via a software modem</string>
+
+
+
+
+</resources>
