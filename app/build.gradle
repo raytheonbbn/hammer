@@ -7,33 +7,65 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 buildscript {
+
     ext.PLUGIN_VERSION = "1.0"
     ext.ATAK_VERSION = "4.1.1"
 
-    ext.sdkPath = project.properties['sdk.path'] ?: "${rootDir}/sdk"
-    ext.takrepoUrl = project.properties['takrepo.url']
-    ext.takrepoUser = project.properties['takrepo.user']
-    ext.takrepoPassword = project.properties['takrepo.password']
+    def takdevVersion = '1.1.0'
 
-    ext.atakApkConfiguration = 'AtakApk'
-    ext.mappingConfiguration = 'Mapping'
-    ext.keystoreConfiguration = 'Keystore'
+    def getValueFromPropertiesFile = { propFile, key ->
+        if(!propFile.isFile() || !propFile.canRead())
+            return null
+        def prop = new Properties()
+        def reader = propFile.newReader()
+        try {
+            prop.load(reader)
+        } finally {
+            reader.close()
+        }
+        return prop.get(key)
+    }
 
-    ext.mavenOnly = project.properties['maven.only'] ?: false
+    def getProperty = { name, defValue ->
+        def prop = project.properties[name] ?:
+                getValueFromPropertiesFile(project.rootProject.file('local.properties'), name)
+        return (null == prop) ? defValue : prop
+    }
 
-    ext.pluginVersion = PLUGIN_VERSION
-    ext.atakVersion = ATAK_VERSION
+    def urlKey = 'takrepo.url'
+
+    ext.isDevKitEnabled = { ->
+        return getProperty(urlKey, null) != null
+    }
+
+    ext.takrepoUrl = getProperty(urlKey, 'http://localhost/')
+    ext.takrepoUser = getProperty('takrepo.user', 'invalid')
+    ext.takrepoPassword = getProperty('takrepo.password', 'invalid')
+    ext.takdevPlugin = getProperty('takdev.plugin', "${rootDir}/../../atak-gradle-takdev.jar")
 
     repositories {
         jcenter()
         google()
         mavenCentral()
+        mavenLocal()
         maven {
             url "https://jitpack.io"
+        }
+        maven {
+            url = takrepoUrl
+            credentials {
+                username = takrepoUser
+                password = takrepoPassword
+            }
         }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:4.0.1'
+        if(isDevKitEnabled()) {
+            classpath "com.atakmap.gradle:atak-gradle-takdev:${takdevVersion}"
+        } else {
+            classpath files(takdevPlugin)
+        }
     }
 }
 
@@ -42,6 +74,7 @@ allprojects {
         jcenter()
         google()
         mavenCentral()
+        mavenLocal()
         maven {
             url "https://jitpack.io"
         }
@@ -49,7 +82,7 @@ allprojects {
 }
 
 apply plugin: 'com.android.application'
-apply plugin: 'gov.tak.atakplugin'
+apply plugin: 'atak-takdev-plugin'
 
 // Attempt to get a suitable version name for the plugin based on
 // either a git or svn repository
@@ -112,6 +145,12 @@ android {
     }
 
     signingConfigs {
+        debug {
+            storeFile file("${buildDir}/android_keystore")
+            storePassword "tnttnt"
+            keyAlias "wintec_mapping"
+            keyPassword "tnttnt"
+        }
         release {
             storeFile file("${buildDir}/android_keystore")
             storePassword "tnttnt"
@@ -168,6 +207,14 @@ android {
         nor {
             dimension "application"
             manifestPlaceholders = [atakApiVersion: "com.atakmap.app@" + ATAK_VERSION + ".NOR"]
+        }
+        hun {
+            dimension "application"
+            manifestPlaceholders = [atakApiVersion: "com.atakmap.app@" + ATAK_VERSION + ".HUN"]
+        }
+        bel {
+            dimension "application"
+            manifestPlaceholders = [atakApiVersion: "com.atakmap.app@" + ATAK_VERSION + ".BEL"]
             matchingFallbacks = 'fvey'
         }
         gbr {
@@ -184,18 +231,6 @@ android {
             dimension "application"
             manifestPlaceholders = [atakApiVersion: "com.atakmap.app@" + ATAK_VERSION + ".INTL"]
             matchingFallbacks = 'fvey'
-        }
-    }
-
-    packagingOptions {
-        exclude 'META-INF/INDEX.LIST'
-    }
-
-    sourceSets {
-        main {
-            setProperty("archivesBaseName", "ATAK-Plugin-" + rootProject.name + "-" + PLUGIN_VERSION + "-" + getVersionName() + "-" + ATAK_VERSION)
-            defaultConfig.versionCode = getVersionCode()
-            defaultConfig.versionName = PLUGIN_VERSION + " (" + getVersionName() + ") - [" + ATAK_VERSION + "]"
         }
     }
 
@@ -238,21 +273,8 @@ android {
     }
 }
 
-// dependencies and configuration have to follow android closure to support build variants
-configurations {
-    // from https://developer.android.com/studio/build/dependencies#dependency_configurations
-    // which indicates we need to define our variant permutations in advance of the dependencies
-
-    android.applicationVariants.all { variant ->
-        "${variant.name}${mappingConfiguration}" {}
-        "${variant.name}${keystoreConfiguration}" {}
-        "${variant.name}${atakApkConfiguration}" {}
-    }
-}
 
 dependencies {
-
-
-
     implementation fileTree(dir: 'libs', include: '*.jar')
 }
+

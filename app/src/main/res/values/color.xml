@@ -4,7 +4,10 @@
     <!-- COMMON -->
     <color name="white">#ffffff</color>
     <color name="darker_gray">#121212</color>
-
+    <color name="white_70">#ffffff</color>
+    <color name="background800">#807A7A</color>
+    <color name="md_blue_200">#2F7F8F</color>
+    <color name="white_93">#ffffff</color>
     <!-- LED -->
 
     <!-- PRESET -->

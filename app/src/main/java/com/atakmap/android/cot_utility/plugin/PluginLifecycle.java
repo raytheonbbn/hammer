@@ -15,27 +15,12 @@ import android.content.Context;
 import android.content.res.Configuration;
 import com.atakmap.coremap.log.Log;
 
-/*
-    Copyright 2020 Raytheon BBN Technologies
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
 public class PluginLifecycle implements Lifecycle {
 
     private final Context pluginContext;
     private final Collection<MapComponent> overlays;
     private MapView mapView;
+    public static Activity activity;
 
     private final static String TAG = PluginLifecycle.class
             .getSimpleName();
@@ -56,6 +41,7 @@ public class PluginLifecycle implements Lifecycle {
     @Override
     public void onCreate(final Activity arg0,
             final transapps.mapi.MapView arg1) {
+        activity = arg0;
         if (arg1 == null || !(arg1.getView() instanceof MapView)) {
             Log.w(TAG, "This plugin is only compatible with ATAK MapView");
             return;

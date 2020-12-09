@@ -4,8 +4,5 @@
     <string name="app_name">HAMMER</string>
     <!-- description -->
     <string name="app_desc">Send and receive CoT messages via a software modem</string>
-
-
-
-
+    <string name="chat_instructions">From the dropdown menu, select a callsign to send to. Then type a message below.</string>
 </resources>

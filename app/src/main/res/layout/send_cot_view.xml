@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <LinearLayout
+        android:id="@+id/linearLayoutTop"
+        android:layout_alignParentTop="true"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#444444">
+        <ImageButton
+            android:id="@+id/backButtonChatView"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/back_arrow"
+            android:background="#444444"/>
+        <TextView
+            android:id="@+id/subheader"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:background="#444444"
+            android:paddingStart="10dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="0dp"
+            android:paddingBottom="10dp"
+            android:text="Chat"
+            android:textColor="@color/white"
+            android:textSize="20sp" />
+        <com.atakmap.android.gui.PluginSpinner
+            android:padding="0dip"
+            android:textSize="15sp"
+            android:id="@+id/callsigns_spinner"
+            android:layout_width="150dp"
+            android:layout_height="50dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:padding="5dp"
+        android:layout_below="@+id/linearLayoutTop"
+        android:layout_above="@+id/linearLayoutBottom"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+            <TextView
+                android:scrollbars = "vertical"
+                android:gravity="bottom"
+                android:minHeight="300dp"
+                android:id="@+id/messageHistoryText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="From the dropdown menu, select a callsign to send to. Then type a message below." />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linearLayoutBottom"
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <EditText
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:id="@+id/editText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="top|left"
+            android:inputType="textMultiLine"
+            android:lines="1"
+            android:maxLines="10"
+            android:minLines="1"
+            android:padding="10dp"
+            android:scrollbars="vertical" />
+
+        <Button
+            android:id="@+id/sendChatBtn"
+            android:text="Send"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/darkButton"
+            android:padding="10dp"
+            android:layout_margin="10dp"/>
+    </LinearLayout>
+
+
+</RelativeLayout>

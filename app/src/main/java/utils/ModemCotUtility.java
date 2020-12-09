@@ -7,6 +7,7 @@ import android.widget.Toast;
 import com.atakmap.android.cot_utility.CoTPositionTool;
 import com.atakmap.android.dropdown.DropDown;
 import com.atakmap.android.dropdown.DropDownReceiver;
+import com.atakmap.android.importexport.CotEventFactory;
 import com.atakmap.android.maps.MapEvent;
 import com.atakmap.android.maps.MapEventDispatcher;
 import com.atakmap.android.maps.MapGroup;
@@ -14,14 +15,15 @@ import com.atakmap.android.maps.MapItem;
 import com.atakmap.android.maps.MapView;
 import com.atakmap.android.maps.Marker;
 import com.atakmap.android.maps.PointMapItem;
-import com.atakmap.android.menu.MenuMapComponent;
 import com.atakmap.android.menu.PluginMenuParser;
+import com.atakmap.coremap.cot.event.CotDetail;
 import com.atakmap.coremap.cot.event.CotEvent;
 import com.atakmap.coremap.log.Log;
 import com.atakmap.coremap.maps.coords.GeoPoint;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import audiomodem.Receiver;
@@ -38,10 +40,17 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
     private static ModemCotUtility instance = null;
     private MapView mapView;
     private Context context;
-    private boolean isReceiving = true;
+    private boolean isReceiving = false;
 
     // Specify padding to prepend CoT messages with
     private final String padding = "000000000000000000000000000000000000000000000000000000000000000";
+    public static boolean useAbbreviatedCoT = true;
+
+    private Set<ChatMessageListener> chatMessageListenerSet = new HashSet<>();
+
+    public interface ChatMessageListener{
+        public void chatReceived(String message, String callsign, String timeMillis, String callsignDestination);
+    }
 
     /**
      * CotUtility utility for sending and receiving cursor on target messages via ax.25
@@ -204,39 +213,79 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
             }
         }
 
-        CotEvent cotEvent = null;
-        try {
-            cotEvent = CotEvent.parse(stringBuilder.toString());
-        }catch (Exception e){
-            e.printStackTrace();
-        }
+        // is chat message
+        if(message.contains("chat@@@")){
+           String[] result = message.split("@@@");
+           String chatMessage = result[1];
+           String callsign = result[2];
+           String callsignToSendTo = result[3];
+           String time = result[4];
 
-        if(cotEvent != null){
-            android.util.Log.d(TAG, "parseCoT: " + cotEvent.toString());
+           String myCallsign = MapView.getMapView().getDeviceCallsign();
 
-            GeoPoint geoPoint = cotEvent.getGeoPoint();
-            Marker m = new Marker(geoPoint, cotEvent.getUID());
-            m.setType(cotEvent.getType());
-            m.setMetaString("start", cotEvent.getStart().toString());
-            m.setMetaString("how", cotEvent.getHow());
-            m.setTitle("CoT Event");
-            m.setMetaString("menu", getMenu());
+            android.util.Log.d(TAG, "parseCoT: " + callsignToSendTo);
+            android.util.Log.d(TAG, "parseCoT: " + myCallsign);
 
-            String type = "Unknown";
-            if(cotEvent.getHow().contains("-h-")){
-                type = "Hostile";
-            }else if(cotEvent.getHow().contains("-f-")){
-                type = "Friendly";
-            }else if(cotEvent.getHow().contains("-n-")){
-                type = "Neutral";
+           if(callsignToSendTo.equals(myCallsign) || callsignToSendTo.equals("ALL")) {
+               android.util.Log.d(TAG, "parseCoT: was equal" );
+               for (ChatMessageListener i : chatMessageListenerSet) {
+                   i.chatReceived(chatMessage, callsign, time, callsignToSendTo);
+               }
+           }
+        }else {
+
+            CotEvent cotEvent = null;
+            try {
+                cotEvent = CotEvent.parse(stringBuilder.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
-            MapGroup mapGroup = getMapView().getRootGroup()
-                    .findMapGroup("Cursor on Target")
-                    .findMapGroup(type);
-            mapGroup.addItem(m);
+            if (cotEvent != null) {
+                android.util.Log.d(TAG, "parseCoT: " + cotEvent.toString());
+                GeoPoint geoPoint = cotEvent.getGeoPoint();
+                Marker m = new Marker(geoPoint, cotEvent.getUID());
+                m.setType(cotEvent.getType());
+                m.setMetaString("start", cotEvent.getStart().toString());
+                m.setMetaString("how", cotEvent.getHow());
 
-            Log.d(TAG, "creating a new unit marker for: " + m.getUID());
+                CotDetail contactElem = cotEvent.getDetail().getFirstChildByName(0, "contact");
+                if(contactElem != null && contactElem.getAttribute("callsign") != null) {
+                    m.setTitle(contactElem.getAttribute("callsign"));
+                } else {
+                    m.setTitle("HAMMER-" + cotEvent.getType());
+                }
+
+                m.setMetaBoolean("transient", false);
+                m.setMetaBoolean("archive", true);
+                m.setMetaBoolean("movable", true);
+                m.setMetaBoolean("removable", true);
+                m.setMetaBoolean("editable", true);
+
+                CotDetail remarksElem = cotEvent.getDetail().getFirstChildByName(0, "remarks");
+                if(remarksElem != null) {
+                    m.setMetaString("remarks", remarksElem.getInnerText());
+                }
+
+                m.setMetaString("menu", getMenu());
+
+                String type = "Unknown";
+                if (cotEvent.getHow().contains("-h-")) {
+                    type = "Hostile";
+                } else if (cotEvent.getHow().contains("-f-")) {
+                    type = "Friendly";
+                } else if (cotEvent.getHow().contains("-n-")) {
+                    type = "Neutral";
+                }
+
+                MapGroup mapGroup = getMapView().getRootGroup()
+                        .findMapGroup("Cursor on Target")
+                        .findMapGroup(type);
+                mapGroup.addItem(m);
+
+                Log.d(TAG, "creating a new unit marker for: " + m.getUID());
+
+            }
         }
     }
 
@@ -255,11 +304,29 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
      * @param mapItem
      */
     public void sendCoT(MapItem mapItem){
-        CotEvent cotEvent = CoTPositionTool.createCoTEvent(mapItem);
-        android.util.Log.d(TAG, "sending COT: " + cotEvent.toString());
+        CotEvent cotEvent;
+        if(useAbbreviatedCoT) {
+            cotEvent = CoTPositionTool.createCoTEvent(mapItem);
+        } else {
+            cotEvent = CotEventFactory.createCotEvent(mapItem);
+        }
+
+        android.util.Log.d(TAG, "sending " + (useAbbreviatedCoT ? "abbreviated" : "non-abbreviated") + " COT: " + cotEvent.toString());
         Sender modemSender = new Sender(this);
         modemSender.execute(padding + cotEvent.toString());
     }
 
+    public void sendChat(String message, String callsignToSendTo){
+        String callsign = MapView.getMapView().getDeviceCallsign();
+        String encodedMessage =  "chat@@@" + message + "@@@" + callsign + "@@@" + callsignToSendTo + "@@@" + System.currentTimeMillis();
+
+        android.util.Log.d(TAG, "sending chat message: " + encodedMessage);
+        Sender modemSender = new Sender(this);
+        modemSender.execute(padding + encodedMessage);
+    }
+
+    public void registerChatListener(ChatMessageListener chatMessageListener){
+        chatMessageListenerSet.add(chatMessageListener);
+    }
 
 }

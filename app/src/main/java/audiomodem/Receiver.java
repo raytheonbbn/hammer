@@ -30,6 +30,9 @@ public class Receiver extends AsyncTask<Void, Double, Result> {
 
     final static int sampleRate = Config.sampleRate;
 
+    // Hoping this will disable AGC and other pre-processing on the incoming audio...
+    //final static int sourceId = MediaRecorder.AudioSource.VOICE_RECOGNITION;
+
     // for TRSS plug
     final static int sourceId = MediaRecorder.AudioSource.DEFAULT;
 
@@ -133,12 +136,18 @@ public class Receiver extends AsyncTask<Void, Double, Result> {
         src.startRecording();
         try {
             Main.receive(input, output);
-        } catch (IOException e) {
-            Log.e(TAG, "receiver failed", e);
+        } catch (Exception e) {
+            if(e != null && e.getMessage() != null && e.getMessage().equalsIgnoreCase("stopped")) {
+                Log.e(TAG, "receiver stopped");
+            } else {
+                Log.e(TAG, "receiver failed", e);
+            }
             return new Result(null, e.getMessage());
         } finally {
-            src.stop();
-            src.release();
+            if(src != null) {
+                src.stop();
+                src.release();
+            }
             publishProgress(0.0);
         }
 

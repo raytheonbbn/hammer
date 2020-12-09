@@ -4,46 +4,82 @@
    android:layout_height="match_parent"
    android:orientation="vertical" >
 
-    <TextView
-        android:id="@+id/subheader"
+
+
+    <LinearLayout
+        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:background="#444444"
-        android:paddingStart="10dp"
-        android:paddingTop="10dp"
-        android:paddingEnd="0dp"
-        android:paddingBottom="10dp"
-        android:text="HAMMER Software Modem"
-        android:textColor="@color/white"
-        android:textSize="20sp" />
-
+        android:background="#444444">
+        <TextView
+            android:id="@+id/subheader"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:background="#444444"
+            android:paddingStart="10dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="0dp"
+            android:paddingBottom="10dp"
+            android:text="HAMMER Software Modem"
+            android:textColor="@color/white"
+            android:textSize="20sp" />
+        <ImageButton
+            android:id="@+id/infoButton"
+            android:layout_marginEnd="5dp"
+            android:layout_gravity="center"
+            android:background="@drawable/ic_info"
+            android:layout_width="30dp"
+            android:layout_height="30dp"/>
+    </LinearLayout>
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="10dp"
-        android:text="Select a CoT marker from the list  below to send, or click on a CoT marker on the map, and send via the hammer icon on the  radial menu." />
-
-    <ScrollView
-        android:id="@+id/weather_table_scrollview"
+        android:text="HAMMER is a utility that allows sending CoT messages over voice comms." />
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_below="@id/subheader"
-        android:layout_marginTop="0dp">
-        <GridLayout
-            android:id="@+id/table"
+        android:orientation="vertical"
+        android:layout_margin="10dp">
+        <Button
+            android:id="@+id/viewCotItemsBtn"
+            android:text="View CoT Markers"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:columnCount="2"
-            android:useDefaultMargins="true"></GridLayout>
-    </ScrollView>
-
-    <Switch
-        android:text="Enable Receive"
-        android:id="@+id/enableReceiveCoTFromModem"
+            style="@style/darkButton"
+            android:padding="10dp"
+            />
+        <Button
+            android:layout_marginTop="10dp"
+            android:id="@+id/sendChatBtn"
+            android:text="Chat Messages"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/darkButton"
+            android:padding="10dp"
+            />
+    </LinearLayout>
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:checked="true"/>
+        android:layout_height="wrap_content">
+        <Space
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"/>
+        <Button
+            android:layout_marginTop="10dp"
+            android:id="@+id/settingsButton"
+            android:text="Settings"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            style="@style/darkButton"
+            android:padding="10dp"
+            android:layout_marginBottom="5dp"
+            android:layout_marginRight="10dp"
+            />
+    </LinearLayout>
 
 </LinearLayout>

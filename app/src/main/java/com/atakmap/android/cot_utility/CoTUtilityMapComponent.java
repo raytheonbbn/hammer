@@ -6,10 +6,18 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
+import com.atakmap.android.cot.CotMapComponent;
+import com.atakmap.android.cot_utility.plugin.PluginLifecycle;
 import com.atakmap.android.cot_utility.plugin.PluginTool;
 
 import utils.CotUtil;
+import utils.MapItems;
 import utils.ModemCotUtility;
+
+import com.atakmap.android.cot_utility.receivers.ReadMeReceiver;
+import com.atakmap.android.cot_utility.receivers.SendChatDropDownReceiver;
+import com.atakmap.android.cot_utility.receivers.SettingsReceiver;
+import com.atakmap.android.cot_utility.receivers.ViewCoTMarkersReceiver;
 import com.atakmap.android.dropdown.DropDownReceiver;
 import com.atakmap.android.ipc.AtakBroadcast;
 import com.atakmap.android.ipc.AtakBroadcast.DocumentedIntentFilter;
@@ -17,6 +25,7 @@ import com.atakmap.android.ipc.AtakBroadcast.DocumentedIntentFilter;
 import com.atakmap.android.ipc.DocumentedExtra;
 import com.atakmap.android.maps.MapEvent;
 import com.atakmap.android.maps.MapEventDispatcher;
+import com.atakmap.android.maps.MapGroup;
 import com.atakmap.android.maps.MapItem;
 import com.atakmap.android.maps.MapView;
 import com.atakmap.android.dropdown.DropDownMapComponent;
@@ -25,35 +34,29 @@ import com.atakmap.android.cot_utility.receivers.CoTUtilityDropDownReceiver;
 import com.atakmap.android.cot_utility.plugin.R;
 import com.atakmap.comms.CommsMapComponent;
 import com.atakmap.comms.CotServiceRemote;
+import com.atakmap.comms.app.CotPortListActivity;
+import com.atakmap.comms.app.TLSUtils;
 import com.atakmap.coremap.cot.event.CotEvent;
 import com.atakmap.coremap.log.Log;
 
-/*
-    Copyright 2020 Raytheon BBN Technologies
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
-public class CoTUtilityMapComponent extends DropDownMapComponent implements CotUtil.CotEventListener, MapEventDispatcher.MapEventDispatchListener, CotServiceRemote.CotEventListener {
+public class CoTUtilityMapComponent extends DropDownMapComponent implements CotUtil.CotEventListener,  CotServiceRemote.CotEventListener, MapEventDispatcher.MapEventDispatchListener {
 
     public static final String TAG = "PluginMain";
 
     public Context pluginContext;
 
     private CoTUtilityDropDownReceiver ddr;
+    private MapView mapView;
 
     public void onCreate(final Context context, Intent intent,
             final MapView view) {
+
+        this.mapView = view;
+        view.getMapEventDispatcher().addMapEventListener(MapEvent.ITEM_ADDED,this);
 
         context.setTheme(R.style.ATAKPluginTheme);
         super.onCreate(context, intent, view);
@@ -68,9 +71,6 @@ public class CoTUtilityMapComponent extends DropDownMapComponent implements CotU
         registerDropDownReceiver(ddr, ddFilter);
 
         CotUtil.setCotEventListener(this);
-        view.getMapEventDispatcher().addMapEventListener(MapEvent.ITEM_ADDED,this);
-
-        //mil.arl.atak.CONTACT_LIST
 
         CommsMapComponent.getInstance().addOnCotEventListener(this);
 
@@ -87,12 +87,29 @@ public class CoTUtilityMapComponent extends DropDownMapComponent implements CotU
         registerDropDownReceiver(modemCotUtility,
                 filter);
 
-        SharedPreferences sharedPref = this.pluginContext.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+        SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
         boolean enabled = sharedPref.getBoolean("cotUtilEnabled", true);
+        boolean useAbbreviated = sharedPref.getBoolean("useAbbreviated", true);
 
         if(enabled) {
             modemCotUtility.startListener();
         }
+
+        ModemCotUtility.useAbbreviatedCoT = useAbbreviated;
+
+
+        ReadMeReceiver readMeReceiver = new ReadMeReceiver(view, context);
+        registerReceiverUsingPluginContext(pluginContext, "readme receiver", readMeReceiver, ReadMeReceiver.SHOW_README);
+
+        SendChatDropDownReceiver sendChatDropDownReceiver = new SendChatDropDownReceiver(view, context);
+        registerReceiverUsingPluginContext(pluginContext, "sendchat receiver", sendChatDropDownReceiver, SendChatDropDownReceiver.SEND_CHAT_RECEIVER);
+
+        ViewCoTMarkersReceiver viewCoTMarkersReceiver = new ViewCoTMarkersReceiver(view, context);
+        registerReceiverUsingPluginContext(pluginContext, "view markers receiver", viewCoTMarkersReceiver, ViewCoTMarkersReceiver.VIEW_COT_MARKERS_RECEIVER);
+
+        SettingsReceiver settingsReceiver = new SettingsReceiver(view, context);
+        registerReceiverUsingPluginContext(pluginContext, "settings receiver", settingsReceiver, SettingsReceiver.SETTINGS_RECEIVER);
+
     }
 
 
@@ -122,18 +139,12 @@ public class CoTUtilityMapComponent extends DropDownMapComponent implements CotU
     }
 
     @Override
-    public void onMapEvent(MapEvent mapEvent) {
-        MapItem mapItem = mapEvent.getItem();
-        if(mapItem.getTitle() != null){
-            android.util.Log.d(TAG, "onReceiveMapEvent: " + mapEvent.getType());
-            android.util.Log.d(TAG, "onReceiveMapEvent: " + mapEvent.getItem().toString());
-
-        }
-
+    public void onCotEvent(CotEvent cotEvent, Bundle bundle) {
+        android.util.Log.d(TAG, "onReceiveMapEvent: " + cotEvent.toString());
     }
 
     @Override
-    public void onCotEvent(CotEvent cotEvent, Bundle bundle) {
-        android.util.Log.d(TAG, "onReceiveMapEvent: " + cotEvent.toString());
+    public void onMapEvent(MapEvent mapEvent) {
+        android.util.Log.d(TAG, "onReceiveMapEvent: " + mapEvent.getType());
     }
 }

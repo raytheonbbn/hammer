@@ -1,9 +1,9 @@
 
 package com.atakmap.android.cot_utility.plugin;
 
-import com.atakmap.android.ipc.AtakBroadcast;
 import com.atakmap.android.cot_utility.receivers.CoTUtilityDropDownReceiver;
 import com.atakmap.android.cot_utility.plugin.R;
+import com.atakmap.android.ipc.AtakBroadcast;
 
 import android.app.Activity;
 import android.content.Context;
@@ -17,22 +17,6 @@ import transapps.maps.plugin.tool.Group;
 import transapps.maps.plugin.tool.Tool;
 import transapps.maps.plugin.tool.ToolDescriptor;
 
-/*
-    Copyright 2020 Raytheon BBN Technologies
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
 public class PluginTool extends Tool implements ToolDescriptor {
     private static final String TAG = PluginTool.class.getSimpleName();
     private final Context context;
