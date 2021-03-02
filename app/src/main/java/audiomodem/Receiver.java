@@ -1,5 +1,7 @@
 package audiomodem;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -8,6 +10,10 @@ import android.media.MediaRecorder;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.Log;
+
+import com.atakmap.android.cot_utility.plugin.PluginLifecycle;
+
+import utils.ModemCotUtility;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -19,6 +25,11 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import java.security.SecureRandom;
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.spec.IvParameterSpec;
 
 import audiomodem.jmodem.InputSampleStream;
 import audiomodem.jmodem.Main;
@@ -45,9 +56,11 @@ public class Receiver extends AsyncTask<Void, Double, Result> {
     private volatile boolean stopFlag = false;
     protected AtomicBoolean cotReceived;
     private AudioRecord src;
+    private ModemCotUtility modemCotUtility;
 
-    public Receiver(AtomicBoolean cotReceived){
+    public Receiver(AtomicBoolean cotReceived, ModemCotUtility modemCotUtility){
         this.cotReceived = cotReceived;
+        this.modemCotUtility = modemCotUtility;
     }
 
     class InputStreamWrapper implements InputSampleStream {
@@ -169,8 +182,27 @@ public class Receiver extends AsyncTask<Void, Double, Result> {
         Log.i(TAG, "Received " + output.toByteArray().length + " bytes");
 
         try {
-            String str = new String(output.toByteArray(), "UTF-8");
-            return new Result(str, null);
+            if (modemCotUtility.usePSK) {
+               Log.i(TAG, "PSK enabled");
+               SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+               String psk = sharedPref.getString("PSKText", "");
+               Log.i(TAG, "PSKText: " + psk);
+               try {
+                   byte[] iv = new byte[16];
+                   new SecureRandom().nextBytes(iv);
+                   Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                   SecretKeySpec key = new SecretKeySpec(psk.getBytes("UTF-8"), "AES");
+                   cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(output.toByteArray(), 0, 16));
+                   String str = new String(cipher.doFinal(output.toByteArray(), 16, output.toByteArray().length-16), "UTF-8");
+                   return new Result(str, null);
+               } catch (Exception e) {
+                   Log.d(TAG, "PSK problem: " + e);
+                   return null;
+               }
+            } else {
+                String str = new String(output.toByteArray(), "UTF-8");
+                return new Result(str, null);
+            }
         } catch (UnsupportedEncodingException e) {
             Log.e(TAG, "unicode decoding failed", e);
             return new Result(null, e.getMessage());

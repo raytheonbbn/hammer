@@ -46,6 +46,8 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
     private final String padding = "000000000000000000000000000000000000000000000000000000000000000";
     public static boolean useAbbreviatedCoT = true;
 
+    public static boolean usePSK = false;
+
     private Set<ChatMessageListener> chatMessageListenerSet = new HashSet<>();
 
     public interface ChatMessageListener{
@@ -150,7 +152,7 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
         android.util.Log.d(TAG, "startCotListener");
         receiveCot = new AtomicBoolean(false);
 
-        rx = new Receiver(receiveCot) {
+        rx = new Receiver(receiveCot, this) {
             @Override
             protected void onPostExecute(Result res) {
                 android.util.Log.d(TAG, "onPostExecute: " + res.out);
