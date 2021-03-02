@@ -46,6 +46,8 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
     private final String padding = "000000000000000000000000000000000000000000000000000000000000000";
     public static boolean useAbbreviatedCoT = true;
 
+    public static boolean useSlowVox = false;
+
     private Set<ChatMessageListener> chatMessageListenerSet = new HashSet<>();
 
     public interface ChatMessageListener{
