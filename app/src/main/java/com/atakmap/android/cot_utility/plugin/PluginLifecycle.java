@@ -15,6 +15,8 @@ import android.content.Context;
 import android.content.res.Configuration;
 import com.atakmap.coremap.log.Log;
 
+import utils.ModemCotUtility;
+
 public class PluginLifecycle implements Lifecycle {
 
     private final Context pluginContext;
@@ -50,7 +52,9 @@ public class PluginLifecycle implements Lifecycle {
         PluginLifecycle.this.overlays
                 .add(new CoTUtilityMapComponent());
 
-        // create components
+        final ModemCotUtility modemCotUtility = ModemCotUtility.getInstance(mapView, pluginContext);
+
+       // create components
         Iterator<MapComponent> iter = PluginLifecycle.this.overlays
                 .iterator();
         MapComponent c;

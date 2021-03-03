@@ -4,12 +4,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Base64;
+import android.os.AsyncTask;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Switch;
+import android.widget.TextView;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,6 +39,10 @@ public class SettingsReceiver extends DropDownReceiver {
     private Switch enableReceiveButton;
     private Switch abbreviateCotSwitch;
     private Switch slowVoxSwitch;
+    private Switch autoBroadcastSwitch;
+
+    private TextView autoBroadcastTV;
+
     private ModemCotUtility modemCotUtility;
     private Context context;
 
@@ -52,6 +60,8 @@ public class SettingsReceiver extends DropDownReceiver {
         enableReceiveButton = settingsView.findViewById(R.id.enableReceiveCoTFromModem);
         abbreviateCotSwitch = settingsView.findViewById(R.id.abbreviateCot);
         slowVoxSwitch       = settingsView.findViewById(R.id.slowVox);
+        autoBroadcastSwitch = settingsView.findViewById(R.id.autoBroadcast);
+        autoBroadcastTV = settingsView.findViewById(R.id.autoBroadcastText);
 
         ImageButton backButton = settingsView.findViewById(R.id.backButtonSettingsView);
         backButton.setOnClickListener(new View.OnClickListener() {
@@ -173,10 +183,44 @@ public class SettingsReceiver extends DropDownReceiver {
                  editor.apply();
                  Log.i(TAG, "slowVox: unloading beep.wav");
              }
+
+            autoBroadcastSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    if(b && !modemCotUtility.isAutoBroadcasting()){
+                        modemCotUtility.startABListener();
+                    }else if(modemCotUtility.isAutoBroadcasting()){
+                        modemCotUtility.stopABListener();
+                    }
+                }
+            });
+
+            if(modemCotUtility.isAutoBroadcasting()){
+                autoBroadcastSwitch.setChecked(true);
+            }else{
+                autoBroadcastSwitch.setChecked(false);
+            }
+
+            autoBroadcastTV.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                }
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                }
+                @Override
+                public void afterTextChanged(Editable s) {
+                    Log.d(TAG, String.format("AutoBroadcast Interval: %s", s.toString()));
+                    SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putString("autoBroadcastInterval", s.toString());
+                    editor.apply();
+                }
+            });
         }
     }
 
-    protected boolean onBackButtonPressed() {
+   protected boolean onBackButtonPressed() {
         DropDownManager.getInstance().clearBackStack();
         DropDownManager.getInstance().removeFromBackStack();
         intent.setAction(CoTUtilityDropDownReceiver.SHOW_PLUGIN);
