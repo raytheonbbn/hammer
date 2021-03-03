@@ -3,6 +3,7 @@ package utils;
 import android.content.Context;
 import android.content.Intent;
 import android.widget.Toast;
+import android.os.AsyncTask;
 
 import com.atakmap.android.cot_utility.CoTPositionTool;
 import com.atakmap.android.dropdown.DropDown;
@@ -26,6 +27,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import audiomodem.AutoBroadcaster;
 import audiomodem.Receiver;
 import audiomodem.Result;
 import audiomodem.Sender;
@@ -41,6 +43,10 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
     private MapView mapView;
     private Context context;
     private boolean isReceiving = false;
+
+    public static AutoBroadcaster ab = null;
+    private boolean isAutoBroadcasting = false;
+    public static boolean AutoBroadcasterEnabled = false;
 
     // Specify padding to prepend CoT messages with
     private final String padding = "000000000000000000000000000000000000000000000000000000000000000";
@@ -142,6 +148,30 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
         return pointItem;
     }
 
+    public void startABListener() {
+        Log.d(TAG, "startAutoBroadcaster"); 
+        isAutoBroadcasting = true;
+
+        ab = new AutoBroadcaster(this, mapView);
+        ab.start();
+        Log.d(TAG, "AutoBroadcasting...");
+    }
+
+    public void stopABListener() {
+        Log.d(TAG, "stopAutoBroadcaster");
+        isAutoBroadcasting = false;
+
+        if(ab == null) {
+            return;
+        }
+
+        ab.stop();
+    }
+
+    public boolean isAutoBroadcasting(){
+        return isAutoBroadcasting;
+    }
+
     /**
      * Start the CoT stream listener
      */
@@ -193,6 +223,7 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
     public boolean isReceiving(){
         return isReceiving;
     }
+
 
     /**
      * Parse message and extract CoT marker
