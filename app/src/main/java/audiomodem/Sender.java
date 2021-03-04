@@ -20,6 +20,11 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 
+import java.security.SecureRandom;
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.spec.IvParameterSpec;
+
 import audiomodem.jmodem.Main;
 import audiomodem.jmodem.OutputSampleStream;
 
@@ -67,7 +72,27 @@ public class Sender extends AsyncTask<String, Double, Void> {
         final int bufSize = AudioTrack.getMinBufferSize(sampleRate, chanFormat, encoding);
 
         OutputBuffer buf = new OutputBuffer();
-        final byte[] data = params[0].getBytes();
+        byte[] data = new byte[1024*32];
+
+        if (modemCotUtility.usePSK) {
+           Log.i(TAG, "PSK enabled");
+           SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+           String psk = sharedPref.getString("PSKText", "");
+           Log.i(TAG, "PSKText: " + psk);
+           try {
+               byte[] iv = new byte[16];
+               new SecureRandom().nextBytes(iv);
+               Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+               SecretKeySpec key = new SecretKeySpec(psk.getBytes("UTF-8"), "AES");
+               cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(iv));
+               data = cipher.doFinal(params[0].getBytes("UTF-8"));
+           } catch (Exception e) {
+               Log.d(TAG, "PSK problem: " + e);
+               return null;
+           }
+        } else {
+            data = params[0].getBytes();
+        }
 
         Log.i(TAG, "Sending " + data.length + " bytes");
         Log.i(TAG, "Buffer size: " + bufSize);

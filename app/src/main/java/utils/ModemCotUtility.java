@@ -3,7 +3,6 @@ package utils;
 import android.content.Context;
 import android.content.Intent;
 import android.widget.Toast;
-import android.os.AsyncTask;
 
 import com.atakmap.android.cot_utility.CoTPositionTool;
 import com.atakmap.android.dropdown.DropDown;
@@ -53,6 +52,7 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
     public static boolean useAbbreviatedCoT = true;
 
     public static boolean useSlowVox = false;
+    public static boolean usePSK = false;
 
     private Set<ChatMessageListener> chatMessageListenerSet = new HashSet<>();
 
@@ -182,7 +182,7 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
         android.util.Log.d(TAG, "startCotListener");
         receiveCot = new AtomicBoolean(false);
 
-        rx = new Receiver(receiveCot) {
+        rx = new Receiver(receiveCot, this) {
             @Override
             protected void onPostExecute(Result res) {
                 android.util.Log.d(TAG, "onPostExecute: " + res.out);
