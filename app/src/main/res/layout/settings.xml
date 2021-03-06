@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:scrollbarAlwaysDrawVerticalTrack="true"
+    android:scrollbars="vertical">
+<LinearLayout
+    android:orientation="vertical"
+    android:layout_width="match_parent"
     android:layout_height="fill_parent">
 
     <LinearLayout
@@ -33,16 +39,7 @@
             android:textSize="20sp" />
     </LinearLayout>
 
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scrollbarAlwaysDrawVerticalTrack="true"
-        android:scrollbars="vertical">
 
-        <LinearLayout
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
 
             <Switch
                 android:id="@+id/enableReceiveCoTFromModem"
@@ -72,29 +69,26 @@
                 android:checked="false"
                 android:text="Slow VOX" />
 
-            <Switch
-                android:id="@+id/autoBroadcast"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginLeft="10dp"
-                android:layout_marginRight="10dp"
-                android:checked="false"
-                android:text="Auto Broadcast" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Switch
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:text="Auto Broadcast"
+            android:id="@+id/autoBroadcast"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            android:checked="false"/>
 
-            <EditText
-                android:id="@+id/autoBroadcastText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginLeft="10dp"
-                android:layout_marginTop="10dp"
-                android:background="@color/white"
-                android:ems="10"
-                android:hint="Enter broadcast interval in miliseconds"
-                android:inputType="textPersonName"
-                android:textColor="#000000"
-                android:visibility="visible"
-                tools:visibility="visible" />
+        <NumberPicker
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:id="@+id/autoBroadcastNP"
+            android:layout_width="match_parent"
+            android:layout_height="60dp" />
+    </LinearLayout>
 
             <Switch
                 android:id="@+id/sharedSecret"
@@ -111,12 +105,13 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
                 android:layout_marginTop="10dp"
                 android:background="@color/white"
                 android:ems="10"
-                android:hint="Enter PSK here, must be 16,32,64 characters"
+                android:hint="Enter PSK here, must be 16, 32, 64 chars"
                 android:inputType="textPersonName"
                 android:textColor="#000000" />
-        </LinearLayout>
-    </ScrollView>
+
 </LinearLayout>
+</ScrollView>

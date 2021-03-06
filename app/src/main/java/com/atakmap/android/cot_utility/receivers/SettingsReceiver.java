@@ -3,7 +3,6 @@ package com.atakmap.android.cot_utility.receivers;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.util.Base64;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -11,11 +10,9 @@ import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.NumberPicker;
 import android.widget.Switch;
 import android.widget.TextView;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 import com.atakmap.android.cot_utility.plugin.PluginLifecycle;
 import com.atakmap.android.cot_utility.plugin.R;
@@ -41,7 +38,7 @@ public class SettingsReceiver extends DropDownReceiver {
     private Switch autoBroadcastSwitch;
     private Switch sharedSecretSwitch;
 
-    private TextView autoBroadcastTV;
+    private NumberPicker autoBroadcastNP;
     private TextView sharedSecretTV;
 
     private ModemCotUtility modemCotUtility;
@@ -62,7 +59,7 @@ public class SettingsReceiver extends DropDownReceiver {
         abbreviateCotSwitch = settingsView.findViewById(R.id.abbreviateCot);
         slowVoxSwitch       = settingsView.findViewById(R.id.slowVox);
         autoBroadcastSwitch = settingsView.findViewById(R.id.autoBroadcast);
-        autoBroadcastTV     = settingsView.findViewById(R.id.autoBroadcastText);
+        autoBroadcastNP     = settingsView.findViewById(R.id.autoBroadcastNP);
         sharedSecretSwitch  = settingsView.findViewById(R.id.sharedSecret);
         sharedSecretTV      = settingsView.findViewById(R.id.sharedSecretText);
 
@@ -222,39 +219,63 @@ public class SettingsReceiver extends DropDownReceiver {
                  Log.i(TAG, "slowVox: unloading beep.wav");
              }
 
-            autoBroadcastSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                    if(b && !modemCotUtility.isAutoBroadcasting()){
-                        modemCotUtility.startABListener();
-                    }else if(modemCotUtility.isAutoBroadcasting()){
-                        modemCotUtility.stopABListener();
-                    }
-                }
-            });
+             final String[] delays = new String[] {"1","5","10","15","30","60","90","120","240","480","960","1440"};
+             autoBroadcastNP.setDisplayedValues(null);
+             autoBroadcastNP.setMinValue(0);
+             autoBroadcastNP.setMaxValue(delays.length-1);
+             autoBroadcastNP.setDisplayedValues(delays);
+             autoBroadcastNP.setValue(3);
 
-            if(modemCotUtility.isAutoBroadcasting()){
-                autoBroadcastSwitch.setChecked(true);
-            }else{
-                autoBroadcastSwitch.setChecked(false);
-            }
+             autoBroadcastSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                 @Override
+                 public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                 if(b && !modemCotUtility.isAutoBroadcasting()){
+                     modemCotUtility.startABListener();
+                     autoBroadcastNP.setEnabled(false);
+                 }else if(modemCotUtility.isAutoBroadcasting()){
+                     modemCotUtility.stopABListener();
+                     autoBroadcastNP.setEnabled(true);
+                 }
+                 }
+             });
 
-            autoBroadcastTV.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                }
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                }
-                @Override
-                public void afterTextChanged(Editable s) {
-                    Log.d(TAG, String.format("AutoBroadcast Interval: %s", s.toString()));
-                    SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
-                    SharedPreferences.Editor editor = sharedPref.edit();
-                    editor.putString("autoBroadcastInterval", s.toString());
-                    editor.apply();
-                }
-            });
+
+             if(modemCotUtility.isAutoBroadcasting()){
+                 autoBroadcastSwitch.setChecked(true);
+                 autoBroadcastNP.setEnabled(false);
+             }else{
+                 autoBroadcastSwitch.setChecked(false);
+                 autoBroadcastNP.setEnabled(true);
+             }
+
+             autoBroadcastNP.setOnScrollListener(new NumberPicker.OnScrollListener() {
+                 SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+                 SharedPreferences.Editor editor = sharedPref.edit();
+                 @Override
+                 public void onScrollStateChange(NumberPicker picker, int scrollState) {
+                     int newVal = picker.getValue();
+                     if (scrollState == NumberPicker.OnScrollListener.SCROLL_STATE_IDLE) {
+                         Log.d(TAG, "IDLE");
+                         newVal = picker.getValue();
+                         Log.d(TAG, String.format("AutoBroadcast Interval: %s", delays[newVal]));
+                         editor.putInt("autoBroadcastInterval", Integer.parseInt(delays[newVal])); // convert to minutes for Thread.sleep()
+                         editor.apply();
+                     }
+                 }
+             });
+/*
+             autoBroadcastNP.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
+                 SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+                 SharedPreferences.Editor editor = sharedPref.edit();
+                 @Override
+                 public void onValueChange(NumberPicker picker, int oldVal, int newVal){
+                     Log.d(TAG, String.format("newVal = %s", newVal));
+                     Log.d(TAG, String.format("AutoBroadcast Interval: %s", delays[newVal]));
+                     editor.putInt("autoBroadcastInterval", Integer.parseInt(delays[newVal])*60000); // convert to minutes for Thread.sleep()
+                     editor.apply();
+                 }
+             });
+*/
         }
     }
 
