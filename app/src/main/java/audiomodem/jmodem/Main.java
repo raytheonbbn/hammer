@@ -7,8 +7,8 @@ import java.util.logging.Logger;
 
 public class Main {
 
-	public static void receive(InputSampleStream src, OutputStream dst) throws IOException {
-		Receiver.run(src,  dst);
+	public static int receive(InputSampleStream src, OutputStream dst) throws IOException {
+		return Receiver.run(src,  dst);
 	}
 
 	public static void send(InputStream src, OutputSampleStream dst) throws IOException {

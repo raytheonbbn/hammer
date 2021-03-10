@@ -62,7 +62,7 @@ class Demodulator {
 		return result;
 	}
 
-	public void run(OutputStream dst) throws IOException {
+	public int run(OutputStream dst) throws IOException {
 		while (true) {
 			int len = getByte();
 			log.info("new packet: " + len + " bytes");
@@ -83,9 +83,11 @@ class Demodulator {
 				throw new IOException("bad checksum");
 			}
 			if (len == 0) {
-				return; // EOF
+				return got; // return the CRC32 of the msg
 			}
 			dst.write(buf, Config.checksumSize, len);
+
+			return got; // return the CRC32 of the msg
 		}
 	}
 }

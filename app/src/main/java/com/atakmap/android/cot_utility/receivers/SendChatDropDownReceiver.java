@@ -116,10 +116,12 @@ public class SendChatDropDownReceiver extends DropDownReceiver implements ModemC
                     if(selectedCallsign != null) {
                         ModemCotUtility.getInstance(mapView, context).stopListener();
                         ModemCotUtility.getInstance(mapView, context).sendChat(editText.getText().toString(), selectedCallsign);
+                        ModemCotUtility.getInstance(mapView, context).startListener();
                         CoordinatedTime coordinatedTime = new CoordinatedTime(System.currentTimeMillis());
 
-                        String history = addToHistory(selectedCallsign, formatChatMessage(editText.getText().toString(), myCallsign, coordinatedTime, true));
+                        String history = addToHistory(selectedCallsign, formatChatMessage(editText.getText().toString(), myCallsign, coordinatedTime, true, false, ModemCotUtility.getInstance(mapView, context).MessageCRC));
                         textView.setText(history);
+                        editText.setText(""); // clear the sent message text from the input
                     }else{
                         Toast toast = Toast.makeText(context, "Please select a callsign to send to", Toast.LENGTH_LONG);
                         toast.show();
@@ -201,12 +203,12 @@ public class SendChatDropDownReceiver extends DropDownReceiver implements ModemC
 
 
     @Override
-    public void chatReceived(String message, String callsign, String timeMillis, String callsignDestination) {
+    public void chatReceived(String message, String callsign, String timeMillis, String callsignDestination, int crc32) {
         CoordinatedTime coordinatedTime = new CoordinatedTime(Long.parseLong(timeMillis));
-        Toast toast = Toast.makeText(context, formatChatMessage(message, callsign, coordinatedTime, false), Toast.LENGTH_SHORT);
+        Toast toast = Toast.makeText(context, formatChatMessage(message, callsign, coordinatedTime, false, true, 0), Toast.LENGTH_SHORT);
         toast.show();
 
-        String chatMessage = formatChatMessage(message, callsign, coordinatedTime, true);
+        String chatMessage = formatChatMessage(message, callsign, coordinatedTime, true, true, crc32);
         String history = addToHistory(callsign, chatMessage);
 
         if(!hasBeenLoaded){
@@ -221,6 +223,77 @@ public class SendChatDropDownReceiver extends DropDownReceiver implements ModemC
         }else if(callsign.equals(selectedCallsign)){
             textView.setText(history);
         }
+    }
+
+    // the crc32 markRead gets is parsed out of the chatack message, it is not the crc of the message
+    // this method processes the message history looking for [unread<crc32>] to be replaced with [read]
+    @Override
+    public void markRead(String callSign, String crc32) {
+        StringBuilder newHistory = new StringBuilder();
+        String messages[];
+
+        Log.i(TAG, String.format("Looking for callSign: %s with CRC32: %s", callSign,crc32));
+        // persist in storage
+        SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+
+        if (callSign == "ALL") {
+            Log.i(TAG, "Updating ALL history");
+            messages = allMessages.split("\n");
+            Log.d(TAG, "allMessages: " + allMessages);
+            Log.d(TAG, "messages.legnth="+messages.length);
+            for (int i = 0; i < messages.length; i++) {
+                Log.d(TAG, String.format("Message[%d]=%s",i,messages[i]));
+
+                if (messages[i].contains(crc32)) { // this should be the metadata line that is marked [unread+<crc32>]
+                    Log.d(TAG, String.format("Replace"));
+                    newHistory.append(messages[i].replace("unread"+crc32, "read"));
+                    newHistory.append("\n\n");
+                } else if (messages[i].startsWith("  -")){ // this should be the metadata line that is already marked [read]
+                    newHistory.append(messages[i]);
+                    newHistory.append("\n\n");
+                } else { // this should be the actual message contents
+                    newHistory.append(messages[i]);
+                    newHistory.append("\n");
+                }
+            }
+            String history = otherCallsignToChatHistory.get(callSign);
+            if (history != newHistory.toString())
+                otherCallsignToChatHistory.put(callSign, newHistory.toString());
+            allMessages = newHistory.toString();
+            editor.putString("ALL", newHistory.toString());
+        } else {
+            Log.i(TAG, "Updating by callsign: " + callSign);
+            String history = otherCallsignToChatHistory.get(callSign);
+
+            if (history == null)
+                history = allMessages;
+
+            messages = history.split("\n");
+            for (int i = 0; i < messages.length; i++) {
+                Log.d(TAG, String.format("Message[%d]=%s",i,messages[i]));
+
+                if (messages[i].contains(crc32)) { // this should be the metadata line that is marked [unread+<crc32>]
+                    Log.d(TAG, String.format("Replace"));
+                    newHistory.append(messages[i].replace("unread"+crc32, "read"));
+                    newHistory.append("\n\n");
+                } else if (messages[i].startsWith("  -")){ // this should be the metadata line that is already marked [read]
+                    newHistory.append(messages[i]);
+                    newHistory.append("\n\n");
+                } else { // this should be the actual message contents
+                    newHistory.append(messages[i]);
+                    newHistory.append("\n");
+                }
+            }
+            Log.d(TAG, String.format("history: %s\n", history));
+            Log.d(TAG, String.format("newHistory: %s\n", newHistory.toString()));
+            if (history != newHistory.toString()) {
+                otherCallsignToChatHistory.put(callSign, newHistory.toString());
+                allMessages = newHistory.toString();
+            }
+        }
+        textView.setText(newHistory.toString());
+        editor.apply();
     }
 
     private String addToHistory(String callsign, String message){
@@ -253,7 +326,7 @@ public class SendChatDropDownReceiver extends DropDownReceiver implements ModemC
         return history;
     }
 
-    private String formatChatMessage(String message, String callsign, CoordinatedTime coordinatedTime, boolean addSpaces){
+    private String formatChatMessage(String message, String callsign, CoordinatedTime coordinatedTime, boolean addSpaces, boolean isRead, int crc32){
         Calendar cal = Calendar.getInstance();
         cal.setTime(new Date(coordinatedTime.getMilliseconds()));
 
@@ -263,7 +336,7 @@ public class SendChatDropDownReceiver extends DropDownReceiver implements ModemC
         if(!addSpaces){
             return message + "   - " + callsign + " (" + timeStamp + ")";
         }else {
-            return message + "\n" + "   - " + callsign + " (" + timeStamp + ")\n\n";
+            return String.format("%s\n   - %s (%s) [%s]\n\n", message, callsign, timeStamp, (isRead ? "read" : "unread"+crc32));
         }
     }
 }

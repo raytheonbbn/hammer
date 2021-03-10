@@ -30,6 +30,7 @@ public class SettingsReceiver extends DropDownReceiver {
 
     private Switch enableReceiveButton;
     private Switch abbreviateCotSwitch;
+    private Switch readReceiptSwitch;
     private ModemCotUtility modemCotUtility;
     private Context context;
 
@@ -46,6 +47,7 @@ public class SettingsReceiver extends DropDownReceiver {
 
         enableReceiveButton = settingsView.findViewById(R.id.enableReceiveCoTFromModem);
         abbreviateCotSwitch = settingsView.findViewById(R.id.abbreviateCot);
+        readReceiptSwitch   = settingsView.findViewById(R.id.readReceipt);
 
         ImageButton backButton = settingsView.findViewById(R.id.backButtonSettingsView);
         backButton.setOnClickListener(new View.OnClickListener() {
@@ -81,6 +83,24 @@ public class SettingsReceiver extends DropDownReceiver {
                     FULL_HEIGHT, false);
 
             modemCotUtility = ModemCotUtility.getInstance(mapView, context);
+
+            readReceiptSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    ModemCotUtility.useReadReceipt = b;
+
+                    SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putBoolean("useReadReceipt", b);
+                    editor.apply();
+                }
+            });
+
+            if(ModemCotUtility.useReadReceipt){
+                readReceiptSwitch.setChecked(true);
+            }else{
+                readReceiptSwitch.setChecked(false);
+            }
 
             abbreviateCotSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override

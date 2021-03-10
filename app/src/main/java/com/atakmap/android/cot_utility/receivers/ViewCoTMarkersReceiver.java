@@ -89,6 +89,7 @@ public class ViewCoTMarkersReceiver extends ViewTableReceiver implements
                     android.util.Log.d(TAG, "sending self position");
                     ModemCotUtility.getInstance(mapView, pluginContext).stopListener();
                     ModemCotUtility.getInstance(mapView, pluginContext).sendCoT(mapView.getSelfMarker());
+                    ModemCotUtility.getInstance(mapView, pluginContext).startListener();
                     Toast toast = Toast.makeText(context, "sending self marker", Toast.LENGTH_SHORT);
                     toast.show();
                 }
@@ -134,6 +135,7 @@ public class ViewCoTMarkersReceiver extends ViewTableReceiver implements
                 public void onClick(View view) {
                     ModemCotUtility.getInstance(mapView, pluginContext).stopListener();
                     ModemCotUtility.getInstance(mapView, pluginContext).sendCoT(mapItem);
+                    ModemCotUtility.getInstance(mapView, pluginContext).startListener();
                 }
             });
 

@@ -104,7 +104,6 @@ public class Sender extends AsyncTask<String, Double, Void> {
         dst.stop();
         dst.release();
 
-        modemCotUtility.startListener();
         return null;
 
     }
