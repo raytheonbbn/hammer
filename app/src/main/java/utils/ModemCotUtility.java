@@ -21,10 +21,12 @@ import com.atakmap.coremap.cot.event.CotEvent;
 import com.atakmap.coremap.log.Log;
 import com.atakmap.coremap.maps.coords.GeoPoint;
 
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.zip.CRC32;
 
 import audiomodem.AutoBroadcaster;
 import audiomodem.Receiver;
@@ -54,10 +56,14 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
     public static boolean useSlowVox = false;
     public static boolean usePSK = false;
 
+    public static int MessageCRC = 0;
+    public static boolean useReadReceipt = false;
+
     private Set<ChatMessageListener> chatMessageListenerSet = new HashSet<>();
 
     public interface ChatMessageListener{
-        public void chatReceived(String message, String callsign, String timeMillis, String callsignDestination);
+        public void chatReceived(String message, String callsign, String timeMillis, String callsignDestination, int crc32);
+        public void markRead(String callsign, String crc32);
     }
 
     /**
@@ -189,7 +195,7 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
                 receiveCot.set(true);
 
                 if(res.out != null)
-                    parseCoT(res.out);
+                    parseCoT(res.out, res.crc32);
 
                 if (res.err != null) {
                     Toast.makeText(MapView.getMapView().getContext(), "Error: " + res.err,
@@ -231,7 +237,7 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
      * Parse message and extract CoT marker
      * @param message
      */
-    private void parseCoT(String message){
+    private void parseCoT(String message, int crc32){
         boolean foundStart = false;
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < message.length(); i++){
@@ -262,9 +268,21 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
            if(callsignToSendTo.equals(myCallsign) || callsignToSendTo.equals("ALL")) {
                android.util.Log.d(TAG, "parseCoT: was equal" );
                for (ChatMessageListener i : chatMessageListenerSet) {
-                   i.chatReceived(chatMessage, callsign, time, callsignToSendTo);
+                   i.chatReceived(chatMessage, callsign, time, callsignToSendTo, crc32);
+                   if (useReadReceipt) {
+                       sendChatAck(callsignToSendTo, crc32);
+                   }
                }
            }
+       }else if (message.contains("ack@@@")) {
+            Log.d(TAG, "handling chatack");
+            String[] result = message.split("@@@");
+            String checksum = result[1]; // the 'message' field holds the checksum
+            //String callsign = result[2]; // from
+            String callsignToSendTo = result[3]; // to
+            for (ChatMessageListener i: chatMessageListenerSet) {
+                i.markRead(callsignToSendTo, checksum);
+            }
         }else {
 
             CotEvent cotEvent = null;
@@ -353,7 +371,25 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
         String callsign = MapView.getMapView().getDeviceCallsign();
         String encodedMessage =  "chat@@@" + message + "@@@" + callsign + "@@@" + callsignToSendTo + "@@@" + System.currentTimeMillis();
 
+        // grab a crc of our outgoing message
+        byte[] msg = new byte[padding.length() + encodedMessage.length()];
+        ByteBuffer bb = ByteBuffer.wrap(msg);
+        bb.put(padding.getBytes());
+        bb.put(encodedMessage.getBytes());
+        CRC32 crc = new CRC32();
+        crc.update(bb.array());
+        MessageCRC = (int) crc.getValue();
+
         android.util.Log.d(TAG, "sending chat message: " + encodedMessage);
+        Sender modemSender = new Sender(this);
+        modemSender.execute(padding + encodedMessage);
+    }
+
+    public void sendChatAck(String callsignToSendTo, int crc32){
+        String myCallsign = MapView.getMapView().getDeviceCallsign();
+        String encodedMessage =  String.format("ack@@@%d@@@%s@@@%s@@@%d",crc32,myCallsign,callsignToSendTo,System.currentTimeMillis());
+
+        android.util.Log.d(TAG, "sending chatack message: " + encodedMessage);
         Sender modemSender = new Sender(this);
         modemSender.execute(padding + encodedMessage);
     }

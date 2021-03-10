@@ -37,6 +37,7 @@ public class SettingsReceiver extends DropDownReceiver {
     private Switch slowVoxSwitch;
     private Switch autoBroadcastSwitch;
     private Switch sharedSecretSwitch;
+    private Switch readReceiptSwitch;
 
     private NumberPicker autoBroadcastNP;
     private TextView sharedSecretTV;
@@ -62,6 +63,7 @@ public class SettingsReceiver extends DropDownReceiver {
         autoBroadcastNP     = settingsView.findViewById(R.id.autoBroadcastNP);
         sharedSecretSwitch  = settingsView.findViewById(R.id.sharedSecret);
         sharedSecretTV      = settingsView.findViewById(R.id.sharedSecretText);
+        readReceiptSwitch   = settingsView.findViewById(R.id.readReceipt);
 
         ImageButton backButton = settingsView.findViewById(R.id.backButtonSettingsView);
         backButton.setOnClickListener(new View.OnClickListener() {
@@ -132,6 +134,24 @@ public class SettingsReceiver extends DropDownReceiver {
                     editor.apply();
                 }
             });
+
+            readReceiptSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    ModemCotUtility.useReadReceipt = b;
+
+                    SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putBoolean("useReadReceipt", b);
+                    editor.apply();
+                }
+            });
+
+            if(ModemCotUtility.useReadReceipt){
+                readReceiptSwitch.setChecked(true);
+            }else{
+                readReceiptSwitch.setChecked(false);
+            }
 
             abbreviateCotSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override

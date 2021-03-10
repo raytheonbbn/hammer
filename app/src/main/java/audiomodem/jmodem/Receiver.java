@@ -13,7 +13,7 @@ class Receiver {
 	
 	private static final Logger log = Logger.getLogger("Receiver");
 
-	public static void run(InputSampleStream src, OutputStream dst) throws IOException {
+	public static int run(InputSampleStream src, OutputStream dst) throws IOException {
 		log.info("detecting");
 		Detector d = new Detector(src);
 		d.run();
@@ -27,9 +27,9 @@ class Receiver {
 
 		log.info("demodulating");
 		Demodulator r = new Demodulator(src, filt);
-		r.run(dst);
+		return r.run(dst);
 
-		log.info("done");
+		//log.info("done");
 	}
 
 	static class InputStreamWrapper implements InputSampleStream {

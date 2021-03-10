@@ -119,6 +119,7 @@ public class Receiver extends AsyncTask<Void, Double, Result> {
     @Override
     protected Result doInBackground(Void... params) {
 
+        int crc32 = 0;
         int chanFormat = AudioFormat.CHANNEL_IN_MONO;
         int encoding = AudioFormat.ENCODING_PCM_16BIT;
         int bufSize = AudioRecord.getMinBufferSize(sampleRate, chanFormat, encoding);
@@ -148,14 +149,14 @@ public class Receiver extends AsyncTask<Void, Double, Result> {
 
         src.startRecording();
         try {
-            Main.receive(input, output);
+            crc32 = Main.receive(input, output);
         } catch (Exception e) {
             if(e != null && e.getMessage() != null && e.getMessage().equalsIgnoreCase("stopped")) {
                 Log.e(TAG, "receiver stopped");
             } else {
                 Log.e(TAG, "receiver failed", e);
             }
-            return new Result(null, e.getMessage());
+            return new Result(null, e.getMessage(), crc32);
         } finally {
             if(src != null) {
                 src.stop();
@@ -175,7 +176,7 @@ public class Receiver extends AsyncTask<Void, Double, Result> {
                 os.close();
             } catch (IOException e) {
                 Log.e(TAG, "audio save failed", e);
-                return new Result(null, e.getMessage());
+                return new Result(null, e.getMessage(), crc32);
             }
         }
 
@@ -194,18 +195,18 @@ public class Receiver extends AsyncTask<Void, Double, Result> {
                    SecretKeySpec key = new SecretKeySpec(psk.getBytes("UTF-8"), "AES");
                    cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(output.toByteArray(), 0, 16));
                    String str = new String(cipher.doFinal(output.toByteArray(), 16, output.toByteArray().length-16), "UTF-8");
-                   return new Result(str, null);
+                   return new Result(str, null, 0);
                } catch (Exception e) {
                    Log.d(TAG, "PSK problem: " + e);
                    return null;
                }
             } else {
                 String str = new String(output.toByteArray(), "UTF-8");
-                return new Result(str, null);
+                return new Result(str, null, crc32);
             }
         } catch (UnsupportedEncodingException e) {
             Log.e(TAG, "unicode decoding failed", e);
-            return new Result(null, e.getMessage());
+            return new Result(null, e.getMessage(), crc32);
         }
     }
 }
