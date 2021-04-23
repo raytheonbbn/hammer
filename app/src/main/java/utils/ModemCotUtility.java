@@ -46,6 +46,10 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
     private final String padding = "000000000000000000000000000000000000000000000000000000000000000";
     public static boolean useAbbreviatedCoT = true;
 
+    // TNC
+    public static boolean useTNC = false;
+    public static boolean aprsdroid_running = false;
+
     private Set<ChatMessageListener> chatMessageListenerSet = new HashSet<>();
 
     public interface ChatMessageListener{
@@ -198,7 +202,7 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
      * Parse message and extract CoT marker
      * @param message
      */
-    private void parseCoT(String message){
+    public void parseCoT(String message){
         boolean foundStart = false;
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < message.length(); i++){

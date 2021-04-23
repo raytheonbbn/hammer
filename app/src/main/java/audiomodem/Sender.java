@@ -1,5 +1,6 @@
 package audiomodem;
 
+import android.content.Intent;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -17,6 +18,8 @@ import java.nio.ShortBuffer;
 
 import audiomodem.jmodem.Main;
 import audiomodem.jmodem.OutputSampleStream;
+
+import com.atakmap.android.cot_utility.plugin.PluginLifecycle;
 
 public class Sender extends AsyncTask<String, Double, Void> {
     private ModemCotUtility modemCotUtility;
@@ -66,6 +69,25 @@ public class Sender extends AsyncTask<String, Double, Void> {
 
         Log.i(TAG, "Sending " + data.length + " bytes");
         Log.i(TAG, "Buffer size: " + bufSize);
+
+        if (ModemCotUtility.useTNC) {
+
+            if (!ModemCotUtility.aprsdroid_running) {
+                // make sure APRSDroid is running
+                Intent i = new Intent("org.aprsdroid.app.SERVICE").setPackage("org.aprsdroid.app");
+                PluginLifecycle.activity.getApplicationContext().startForegroundService(i);
+            }
+
+            modemCotUtility.stopListener();
+
+            // send off to TNC
+            Intent i = new Intent("org.aprsdroid.app.SEND_PACKET").setPackage("org.aprsdroid.app");
+            i.putExtra("data", params[0].substring());
+            PluginLifecycle.activity.getApplicationContext().startForegroundService(i);
+
+            modemCotUtility.startListener();
+            return null;
+        }
 
         try {
             Main.send(new ByteArrayInputStream(data), buf);

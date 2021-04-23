@@ -14,6 +14,7 @@ import utils.CotUtil;
 import utils.MapItems;
 import utils.ModemCotUtility;
 
+import com.atakmap.android.cot_utility.receivers.APRSdroidEventReceiver;
 import com.atakmap.android.cot_utility.receivers.ReadMeReceiver;
 import com.atakmap.android.cot_utility.receivers.SendChatDropDownReceiver;
 import com.atakmap.android.cot_utility.receivers.SettingsReceiver;
@@ -97,6 +98,8 @@ public class CoTUtilityMapComponent extends DropDownMapComponent implements CotU
 
         ModemCotUtility.useAbbreviatedCoT = useAbbreviated;
 
+        APRSdroidEventReceiver aprsDroidReceiver = new APRSdroidEventReceiver(view, context);
+        registerReceiverUsingPluginContext(pluginContext, "aprsdroid receiver", aprsDroidReceiver, APRSdroidEventReceiver.APRSDROID_RECEIVER);
 
         ReadMeReceiver readMeReceiver = new ReadMeReceiver(view, context);
         registerReceiverUsingPluginContext(pluginContext, "readme receiver", readMeReceiver, ReadMeReceiver.SHOW_README);

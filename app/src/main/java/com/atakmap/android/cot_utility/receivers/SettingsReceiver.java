@@ -1,8 +1,11 @@
 package com.atakmap.android.cot_utility.receivers;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CompoundButton;
@@ -30,10 +33,11 @@ public class SettingsReceiver extends DropDownReceiver {
 
     private Switch enableReceiveButton;
     private Switch abbreviateCotSwitch;
+    private Switch enableTNCSwitch;
     private ModemCotUtility modemCotUtility;
     private Context context;
 
-    private EditText ipEditText, portEditText;
+    private EditText ipEditText, portEditText, frequencyText;
 
     public SettingsReceiver(MapView mapView, Context context) {
         super(mapView);
@@ -46,6 +50,8 @@ public class SettingsReceiver extends DropDownReceiver {
 
         enableReceiveButton = settingsView.findViewById(R.id.enableReceiveCoTFromModem);
         abbreviateCotSwitch = settingsView.findViewById(R.id.abbreviateCot);
+        enableTNCSwitch = settingsView.findViewById(R.id.TNC);
+        frequencyText = settingsView.findViewById(R.id.frequency);
 
         ImageButton backButton = settingsView.findViewById(R.id.backButtonSettingsView);
         backButton.setOnClickListener(new View.OnClickListener() {
@@ -122,6 +128,55 @@ public class SettingsReceiver extends DropDownReceiver {
                 enableReceiveButton.setChecked(false);
             }
 
+            enableTNCSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    ModemCotUtility.useTNC  = b;
+
+                    SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putBoolean("useTNC", b);
+                    editor.apply();
+                }
+            });
+
+            if(ModemCotUtility.useTNC) {
+                enableTNCSwitch.setChecked(true);
+
+                if (!ModemCotUtility.aprsdroid_running) {
+                    // make sure APRSDroid is running
+                    Intent i = new Intent("org.aprsdroid.app.SERVICE").setPackage("org.aprsdroid.app");
+                    PluginLifecycle.activity.getApplicationContext().startForegroundService(i);
+                }
+            } else{
+                enableTNCSwitch.setChecked(false);
+
+                if (ModemCotUtility.aprsdroid_running) {
+                    // make sure APRSDroid is stopped
+                    Intent i = new Intent("org.aprsdroid.app.SERVICE_STOP").setPackage("org.aprsdroid.app");
+                    PluginLifecycle.activity.getApplicationContext().startForegroundService(i);
+                }
+            }
+
+            frequencyText.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                }
+
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                    if (ModemCotUtility.aprsdroid_running) {
+                        Log.d(TAG, String.format("APRS Frequency: %s", s.toString()));
+                        Intent i = new Intent("org.aprsdroid.app.FREQUENCY").setPackage("org.aprsdroid.app");
+                        i.putExtra("frequency", s.toString());
+                        PluginLifecycle.activity.getApplicationContext().startForegroundService(i);
+                    }
+                }
+           });
         }
     }
 
