@@ -3,26 +3,34 @@ package com.atakmap.android.cot_utility.receivers;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
+import android.view.LayoutInflater;
+import android.view.View;
 
+import com.atak.plugins.impl.PluginLayoutInflater;
+import com.atakmap.android.cot_utility.plugin.R;
+import com.atakmap.android.dropdown.DropDown;
 import com.atakmap.coremap.log.Log;
 import com.atakmap.android.maps.MapView;
 import com.atakmap.android.dropdown.DropDownReceiver;
 import utils.ModemCotUtility;
 
-public class APRSdroidEventReceiver extends DropDownReceiver {
+public class APRSdroidEventReceiver extends DropDownReceiver implements DropDown.OnStateListener {
 
 	public static final String TAG = APRSdroidEventReceiver.class.getSimpleName();
 
-	public static final String APRSDROID_RECEIVER = "com.atakmap.android.cot_utility.APRSDROID_RECEIVER";
-	//private final View templateView;
+	private final View mainView;
 	private final Context pluginContext;
+	private MapView mapView;
 
 
 	public APRSdroidEventReceiver(final MapView mapView, final Context context) {
 		super(mapView);
-		this.pluginContext = context;
 
-		//templateView = PluginLayoutInflater.inflate(context, R.layout.main_layout, null);
+		this.pluginContext = context;
+		LayoutInflater inflater = (LayoutInflater) context
+				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		this.mainView = inflater.inflate(R.layout.main_layout, null);
+		this.mapView = mapView;
 	}
 
 	public void disposeImpl() {
@@ -31,8 +39,15 @@ public class APRSdroidEventReceiver extends DropDownReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 
-		if (!intent.getAction().startsWith("org.aprsdroid.app"))
+		if(intent == null) {
+			android.util.Log.w(TAG, "Doing nothing, because intent was null");
 			return;
+		}
+
+		if (intent.getAction() == null) {
+			android.util.Log.w(TAG, "Doing nothing, because intent action was null");
+			return;
+		}
 
 		String a = intent.getAction().replace("org.aprsdroid.app.", "");
 
@@ -65,4 +80,21 @@ public class APRSdroidEventReceiver extends DropDownReceiver {
 				break;
 		}
 	}
+
+	@Override
+	public void onDropDownSelectionRemoved() {
+	}
+
+	@Override
+	public void onDropDownVisible(boolean v) {
+	}
+
+	@Override
+	public void onDropDownSizeChanged(double width, double height) {
+	}
+
+	@Override
+	public void onDropDownClose() {
+	}
+
 }

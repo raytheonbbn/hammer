@@ -82,7 +82,7 @@ public class Sender extends AsyncTask<String, Double, Void> {
 
             // send off to TNC
             Intent i = new Intent("org.aprsdroid.app.SEND_PACKET").setPackage("org.aprsdroid.app");
-            i.putExtra("data", params[0].substring());
+            i.putExtra("data", params[0]);
             PluginLifecycle.activity.getApplicationContext().startForegroundService(i);
 
             modemCotUtility.startListener();

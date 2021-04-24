@@ -99,7 +99,13 @@ public class CoTUtilityMapComponent extends DropDownMapComponent implements CotU
         ModemCotUtility.useAbbreviatedCoT = useAbbreviated;
 
         APRSdroidEventReceiver aprsDroidReceiver = new APRSdroidEventReceiver(view, context);
-        registerReceiverUsingPluginContext(pluginContext, "aprsdroid receiver", aprsDroidReceiver, APRSdroidEventReceiver.APRSDROID_RECEIVER);
+        android.util.Log.d(TAG, "Registering aprsdroid receiver with intent filter");
+        AtakBroadcast.DocumentedIntentFilter mainIntentFilter = new AtakBroadcast.DocumentedIntentFilter();
+        mainIntentFilter.addAction("org.aprsdroid.app.SERVICE_STARTED");
+        mainIntentFilter.addAction("org.aprsdroid.app.SERVICE_STOPPED");
+        mainIntentFilter.addAction("org.aprsdroid.app.MESSAGE");
+        mainIntentFilter.addAction("org.aprsdroid.app.POSITION");
+        this.registerReceiver(pluginContext, aprsDroidReceiver, mainIntentFilter);
 
         ReadMeReceiver readMeReceiver = new ReadMeReceiver(view, context);
         registerReceiverUsingPluginContext(pluginContext, "readme receiver", readMeReceiver, ReadMeReceiver.SHOW_README);
