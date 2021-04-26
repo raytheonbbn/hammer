@@ -3,6 +3,7 @@ package com.atakmap.android.cot_utility;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
@@ -98,14 +99,14 @@ public class CoTUtilityMapComponent extends DropDownMapComponent implements CotU
 
         ModemCotUtility.useAbbreviatedCoT = useAbbreviated;
 
-        APRSdroidEventReceiver aprsDroidReceiver = new APRSdroidEventReceiver(view, context);
-        android.util.Log.d(TAG, "Registering aprsdroid receiver with intent filter");
-        AtakBroadcast.DocumentedIntentFilter mainIntentFilter = new AtakBroadcast.DocumentedIntentFilter();
-        mainIntentFilter.addAction("org.aprsdroid.app.SERVICE_STARTED");
-        mainIntentFilter.addAction("org.aprsdroid.app.SERVICE_STOPPED");
-        mainIntentFilter.addAction("org.aprsdroid.app.MESSAGE");
-        mainIntentFilter.addAction("org.aprsdroid.app.POSITION");
-        this.registerReceiver(pluginContext, aprsDroidReceiver, mainIntentFilter);
+        Log.d(TAG, "Registering aprs receiver with intent filter");
+        APRSdroidEventReceiver aprsDroidReceiver = new APRSdroidEventReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("org.aprsdroid.app.SERVICE_STARTED");
+        intentFilter.addAction("org.aprsdroid.app.SERVICE_STOPPED");
+        intentFilter.addAction("org.aprsdroid.app.MESSAGE");
+        intentFilter.addAction("org.aprsdroid.app.POSITION");
+        pluginContext.registerReceiver(aprsDroidReceiver, intentFilter);
 
         ReadMeReceiver readMeReceiver = new ReadMeReceiver(view, context);
         registerReceiverUsingPluginContext(pluginContext, "readme receiver", readMeReceiver, ReadMeReceiver.SHOW_README);
