@@ -6,6 +6,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.AsyncTask;
+import android.util.Base64;
 import android.util.Log;
 
 import com.atakmap.android.cot_utility.plugin.PluginLifecycle;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
@@ -75,14 +77,23 @@ public class Sender extends AsyncTask<String, Double, Void> {
 
         if (modemCotUtility.usePSK) {
            Log.i(TAG, "PSK enabled");
+           byte[] PSKhash;
            SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
            String psk = sharedPref.getString("PSKText", "");
            Log.i(TAG, "PSKText: " + psk);
            try {
+               MessageDigest digest = MessageDigest.getInstance("SHA-256");
+               PSKhash = digest.digest(psk.getBytes());
+               Log.i(TAG, "PSKText hash: " + PSKhash.toString());
+           } catch (Exception e) {
+               Log.d(TAG, "PSK Hashing problem: " + e);
+               return null;
+           }
+           try {
                byte[] iv = new byte[16];
                new SecureRandom().nextBytes(iv);
                Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-               SecretKeySpec key = new SecretKeySpec(psk.getBytes("UTF-8"), "AES");
+               SecretKeySpec key = new SecretKeySpec(PSKhash, "AES");
                cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(iv));
                data = cipher.doFinal(params[0].getBytes("UTF-8"));
            } catch (Exception e) {

@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
@@ -184,16 +185,29 @@ public class Receiver extends AsyncTask<Void, Double, Result> {
         try {
             if (modemCotUtility.usePSK) {
                Log.i(TAG, "PSK enabled");
+               byte[] PSKhash;
                SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
                String psk = sharedPref.getString("PSKText", "");
                Log.i(TAG, "PSKText: " + psk);
                try {
+                   MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                   PSKhash = digest.digest(psk.getBytes());
+                   Log.i(TAG, "PSKText hash: " + PSKhash.toString());
+               } catch (Exception e) {
+                   Log.d(TAG, "PSK Hashing problem: " + e);
+                   return null;
+               }
+               try {
                    byte[] iv = new byte[16];
                    new SecureRandom().nextBytes(iv);
                    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-                   SecretKeySpec key = new SecretKeySpec(psk.getBytes("UTF-8"), "AES");
+                   SecretKeySpec key = new SecretKeySpec(PSKhash, "AES");
                    cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(output.toByteArray(), 0, 16));
-                   String str = new String(cipher.doFinal(output.toByteArray(), 16, output.toByteArray().length-16), "UTF-8");
+                   String str = new String(cipher.doFinal(output.toByteArray()), "UTF-8");
+                   if (str.indexOf("chat@@@") == -1) {
+                        // COT have problems
+			str = str.substring(str.indexOf("<?xml"),str.length());
+                   }
                    return new Result(str, null);
                } catch (Exception e) {
                    Log.d(TAG, "PSK problem: " + e);
