@@ -65,7 +65,7 @@
         android:layout_marginLeft="10dp"
         android:layout_marginTop="10dp"
         android:ems="10"
-        android:hint="Enter PSK here, must be 16,32,64 characters"
+        android:hint="Enter PSK here"
 	android:textColor="#000000"
         android:background="@color/white"
         android:inputType="textPersonName" />
