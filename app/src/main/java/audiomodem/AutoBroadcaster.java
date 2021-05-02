@@ -35,7 +35,7 @@ public class AutoBroadcaster implements Runnable {
         Random rand = new Random();
         try {
             while(running) {
-                r = rand.nextInt(10); // introduce a skew to help prevent a group's sync from all TX at the same time
+                r = rand.nextInt(3) + 7; // introduce a skew to help prevent a group's sync from all TX at the same time
                 Thread.sleep(r*1000);
                 delay = sharedPref.getInt("autoBroadcastInterval", 60000); // default 60 seconds delay
                 Log.i(TAG, String.format("Delaying broadcast for : %d minutes", delay));

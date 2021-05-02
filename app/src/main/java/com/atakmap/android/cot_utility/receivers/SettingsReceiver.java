@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 
 
-
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -235,13 +235,6 @@ public class SettingsReceiver extends DropDownReceiver {
                 }
            });
  */
-            final String[] delays = new String[]{"1", "5", "10", "15", "30", "60", "90", "120", "240", "480", "960", "1440"};
-            autoBroadcastNP.setDisplayedValues(null);
-            autoBroadcastNP.setMinValue(0);
-            autoBroadcastNP.setMaxValue(delays.length - 1);
-            autoBroadcastNP.setDisplayedValues(delays);
-            autoBroadcastNP.setValue(3);
-
             autoBroadcastSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
@@ -263,7 +256,31 @@ public class SettingsReceiver extends DropDownReceiver {
                 autoBroadcastNP.setEnabled(true);
             }
 
-            autoBroadcastNP.setOnScrollListener(new NumberPicker.OnScrollListener() {
+            final String[] delays = new String[]{"1", "5", "10", "15", "30", "60", "90", "120", "240", "480", "960", "1440"};
+            autoBroadcastNP.setDisplayedValues(null);
+            autoBroadcastNP.setMinValue(0);
+            autoBroadcastNP.setMaxValue(delays.length - 1);
+            autoBroadcastNP.setWrapSelectorWheel(false);
+            autoBroadcastNP.setDisplayedValues(delays);
+            autoBroadcastNP.setOnLongPressUpdateInterval(200);
+
+            SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+            int delay = sharedPref.getInt("autoBroadcastInterval", 0);
+            if (delay == 0)
+                autoBroadcastNP.setValue(2);
+
+
+            autoBroadcastNP.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
+                @Override
+                public void onValueChange(NumberPicker picker, final int oldVal, final int newVal) {
+                    Log.d(TAG, String.format("AutoBroadcast Interval: %s", delays[newVal]));
+                    SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putInt("autoBroadcastInterval", Integer.parseInt(delays[newVal])); // convert to minutes for Thread.sleep()
+                    editor.apply();
+                }
+            });
+                    /*setOnScrollListener(new NumberPicker.OnScrollListener() {
                 SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPref.edit();
 
@@ -273,12 +290,16 @@ public class SettingsReceiver extends DropDownReceiver {
                     if (scrollState == NumberPicker.OnScrollListener.SCROLL_STATE_IDLE) {
                         Log.d(TAG, "IDLE");
                         newVal = picker.getValue();
-                        Log.d(TAG, String.format("AutoBroadcast Interval: %s", delays[newVal]));
-                        editor.putInt("autoBroadcastInterval", Integer.parseInt(delays[newVal])); // convert to minutes for Thread.sleep()
-                        editor.apply();
+                        picker.postDelayed( {
+                            Log.d(TAG, String.format("AutoBroadcast Interval: %s", delays[newVal]));
+                            editor.putInt("autoBroadcastInterval", Integer.parseInt(delays[newVal])); // convert to minutes for Thread.sleep()
+                            editor.apply();
+                        }, 500);
                     }
                 }
             });
+            */
+
         }
     }
 
