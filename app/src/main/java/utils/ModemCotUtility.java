@@ -43,12 +43,16 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
     private boolean isReceiving = false;
 
     // Specify padding to prepend CoT messages with
-    private final String padding = "000000000000000000000000000000000000000000000000000000000000000";
+    public final String padding = "000000000000000000000000000000000000000000000000000000000000000";
     public static boolean useAbbreviatedCoT = true;
 
     // TNC
     public static boolean useTNC = false;
     public static boolean aprsdroid_running = false;
+
+    // PSK
+    public static boolean usePSK = false;
+
 
     private Set<ChatMessageListener> chatMessageListenerSet = new HashSet<>();
 
@@ -227,11 +231,7 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
 
            String myCallsign = MapView.getMapView().getDeviceCallsign();
 
-            android.util.Log.d(TAG, "parseCoT: " + callsignToSendTo);
-            android.util.Log.d(TAG, "parseCoT: " + myCallsign);
-
            if(callsignToSendTo.equals(myCallsign) || callsignToSendTo.equals("ALL")) {
-               android.util.Log.d(TAG, "parseCoT: was equal" );
                for (ChatMessageListener i : chatMessageListenerSet) {
                    i.chatReceived(chatMessage, callsign, time, callsignToSendTo);
                }

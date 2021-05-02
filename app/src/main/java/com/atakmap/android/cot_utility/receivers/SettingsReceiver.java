@@ -12,6 +12,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Switch;
+import android.widget.TextView;
 
 import com.atakmap.android.cot_utility.plugin.PluginLifecycle;
 import com.atakmap.android.cot_utility.plugin.R;
@@ -34,6 +35,8 @@ public class SettingsReceiver extends DropDownReceiver {
     private Switch enableReceiveButton;
     private Switch abbreviateCotSwitch;
     private Switch enableTNCSwitch;
+    private Switch sharedSecretSwitch;
+    private TextView sharedSecretTV;
     private ModemCotUtility modemCotUtility;
     private Context context;
 
@@ -50,8 +53,14 @@ public class SettingsReceiver extends DropDownReceiver {
 
         enableReceiveButton = settingsView.findViewById(R.id.enableReceiveCoTFromModem);
         abbreviateCotSwitch = settingsView.findViewById(R.id.abbreviateCot);
+
+        // TNC
         enableTNCSwitch = settingsView.findViewById(R.id.TNC);
-        frequencyText = settingsView.findViewById(R.id.frequency);
+        //frequencyText = settingsView.findViewById(R.id.frequency);
+
+        // PSK
+        sharedSecretSwitch = settingsView.findViewById(R.id.sharedSecret);
+        sharedSecretTV = settingsView.findViewById(R.id.sharedSecretText);
 
         ImageButton backButton = settingsView.findViewById(R.id.backButtonSettingsView);
         backButton.setOnClickListener(new View.OnClickListener() {
@@ -87,6 +96,41 @@ public class SettingsReceiver extends DropDownReceiver {
                     FULL_HEIGHT, false);
 
             modemCotUtility = ModemCotUtility.getInstance(mapView, context);
+
+            sharedSecretSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    ModemCotUtility.usePSK = b;
+
+                    SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putBoolean("usePSK", b);
+                    editor.apply();
+                }
+            });
+
+            if(ModemCotUtility.usePSK){
+                sharedSecretSwitch.setChecked(true);
+            }else{
+                sharedSecretSwitch.setChecked(false);
+            }
+
+            sharedSecretTV.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                }
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                }
+                @Override
+                public void afterTextChanged(Editable s) {
+                    Log.d(TAG, String.format("PSK Text: %s", s.toString()));
+                    SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPref.edit();
+                    editor.putString("PSKText", s.toString());
+                    editor.apply();
+                }
+            });
 
             abbreviateCotSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
@@ -150,14 +194,15 @@ public class SettingsReceiver extends DropDownReceiver {
                 }
             } else{
                 enableTNCSwitch.setChecked(false);
-
+                /*
                 if (ModemCotUtility.aprsdroid_running) {
                     // make sure APRSDroid is stopped
                     Intent i = new Intent("org.aprsdroid.app.SERVICE_STOP").setPackage("org.aprsdroid.app");
                     PluginLifecycle.activity.getApplicationContext().startForegroundService(i);
                 }
+                */
             }
-
+/*
             frequencyText.addTextChangedListener(new TextWatcher() {
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -177,7 +222,8 @@ public class SettingsReceiver extends DropDownReceiver {
                     }
                 }
            });
-        }
+ */
+         }
     }
 
     protected boolean onBackButtonPressed() {

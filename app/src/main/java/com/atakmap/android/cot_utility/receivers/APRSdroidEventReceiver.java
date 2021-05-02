@@ -3,10 +3,20 @@ package com.atakmap.android.cot_utility.receivers;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
+import android.util.Base64;
 
+import com.atakmap.android.cot_utility.plugin.PluginLifecycle;
 import com.atakmap.coremap.log.Log;
 import com.atakmap.android.maps.MapView;
+
+import java.security.MessageDigest;
+import java.util.Arrays;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import utils.ModemCotUtility;
 
@@ -42,19 +52,6 @@ public class APRSdroidEventReceiver extends BroadcastReceiver {
 				ModemCotUtility.aprsdroid_running = false;
 				Log.i(TAG, "APRSdroid is not running");
 				break;
-			case "MESSAGE":
-				try {
-					String message = intent.getStringExtra("body");
-					// HACK: don't process our own messages
-					if (message.contains(MapView.getMapView().getDeviceCallsign()))
-						break;
-					String source = intent.getStringExtra("source");
-					String dest = intent.getStringExtra("dest");
-					Log.i(TAG, String.format("Message from: %s\nMessage to: %s\nMessage Body: %s", source, dest, message));
-					ModemCotUtility.getInstance(MapView.getMapView(), context).parseCoT(message.split("\\!")[1]);
-				} catch (Exception e) {
-				}
-				break;
 			case "POSITION":
 				try {
 					String packet = intent.getStringExtra("packet");
@@ -64,6 +61,39 @@ public class APRSdroidEventReceiver extends BroadcastReceiver {
 					String callsign = intent.getStringExtra("callsign");
 					Location location = intent.getParcelableExtra("location");
 					Log.i(TAG, String.format("Position callsign: %s\nLocation: %s\nPacket: %s", callsign, location, packet));
+					if (ModemCotUtility.getInstance(MapView.getMapView(), context).usePSK) {
+						Log.i(TAG, "PSK enabled");
+						byte[] PSKhash;
+						SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+						String psk = sharedPref.getString("PSKText", "atakatak");
+						try {
+							MessageDigest digest = MessageDigest.getInstance("MD5");
+							PSKhash = digest.digest(psk.getBytes("UTF-8"));
+						} catch (Exception e) {
+							Log.d(TAG, "Decrypt PSK Hashing problem: " + e);
+							return;
+						}
+						try {
+							// strip off the cruft that made APRSDroid happy
+							packet = packet.substring(packet.indexOf("!")+1);
+							byte[] cipherText = Base64.decode(packet, Base64.NO_WRAP);
+							Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+							SecretKeySpec key = new SecretKeySpec(PSKhash, "AES");
+							// first 16 bytes are IV
+							byte[] iv = Arrays.copyOf(cipherText,16);
+							cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(iv));
+							// don't decrypt the IV
+							packet = new String(cipher.doFinal(Arrays.copyOfRange(cipherText, 16, cipherText.length)), "UTF-8");
+							ModemCotUtility.getInstance(MapView.getMapView(), context).parseCoT(packet);
+							break;
+						} catch (Exception e) {
+							Log.d(TAG, "Decrypt PSK problem: " + e);
+							e.printStackTrace();
+							return;
+						}
+					}
+
+					// with no PSK just split at the ")NAME!" and parse the second half
 					ModemCotUtility.getInstance(MapView.getMapView(), context).parseCoT(packet.split("\\!")[1]);
 				} catch (Exception e) {
 				}
