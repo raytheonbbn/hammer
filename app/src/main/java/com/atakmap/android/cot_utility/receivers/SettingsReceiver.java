@@ -270,7 +270,7 @@ public class SettingsReceiver extends DropDownReceiver {
             autoBroadcastNP.setMaxValue(delays.length - 1);
             autoBroadcastNP.setWrapSelectorWheel(false);
             autoBroadcastNP.setDisplayedValues(delays);
-            autoBroadcastNP.setOnLongPressUpdateInterval(200);
+            //autoBroadcastNP.setOnLongPressUpdateInterval(200);
 
             SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
             int delay = sharedPref.getInt("autoBroadcastInterval", 0);

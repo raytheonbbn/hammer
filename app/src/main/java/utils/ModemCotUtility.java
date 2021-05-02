@@ -191,7 +191,7 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
         android.util.Log.d(TAG, "startCotListener");
         receiveCot = new AtomicBoolean(false);
 
-        rx = new Receiver(receiveCot) {
+        rx = new Receiver(receiveCot, this) {
             @Override
             protected void onPostExecute(Result res) {
                 android.util.Log.d(TAG, "onPostExecute: " + res.out);
