@@ -2,13 +2,17 @@ package audiomodem;
 
 import android.content.Context;
 import android.content.Intent;
+
 import android.content.SharedPreferences;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.AsyncTask;
+import android.util.Base64;
 import android.util.Log;
 import android.util.Base64;
+
+import com.atakmap.android.cot_utility.plugin.PluginLifecycle;
 
 import utils.ModemCotUtility;
 
@@ -158,6 +162,33 @@ public class Sender extends AsyncTask<String, Double, Void> {
         int n = dst.write(samples, 0, samples.length);
         double duration = ((double) n) / sampleRate;
         Log.d(TAG, String.format("playing %d samples (%f seconds)", n, duration));
+
+        if(modemCotUtility.useSlowVox) {
+            Log.i(TAG, String.format("slowVox: Enabled"));
+            SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+            byte[] beep_bytes = Base64.decode(sharedPref.getString("b64_beep_bytes", ""), Base64.DEFAULT);
+            Log.d(TAG, String.format("beep_bytes.length = %d", beep_bytes.length));
+            AudioTrack beep = new AudioTrack(
+                    streamType,
+                    sampleRate,
+                    chanFormat,
+                    encoding,
+                    beep_bytes.length,
+                    mode
+            );
+            if (beep_bytes.length != beep.write(beep_bytes, 0, beep_bytes.length)) {
+                Log.w(TAG, "beep lengths don't match");
+            }
+            beep.play();
+            try {
+                Thread.sleep(1000);
+            } catch(InterruptedException e) {
+                Log.e(TAG, String.format("slowVox: sleep failed"));
+            } finally {
+                beep.stop();
+                beep.release();
+            }
+        }
 
         dst.play();
         try {

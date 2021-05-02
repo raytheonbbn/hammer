@@ -64,6 +64,15 @@
         <Switch
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
+            android:text="Slow VOX"
+            android:id="@+id/slowVox"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:checked="false"/>
+
+        <Switch
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
             android:text="Use APRSDroid TNC"
             android:id="@+id/TNC"
             android:layout_width="match_parent"

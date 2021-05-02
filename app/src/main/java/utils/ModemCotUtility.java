@@ -59,6 +59,9 @@ public class ModemCotUtility extends DropDownReceiver implements DropDown.OnStat
     // PSK
     public static boolean usePSK = false;
 
+    // VOX
+    public static boolean useSlowVox = false;
+
 
     private Set<ChatMessageListener> chatMessageListenerSet = new HashSet<>();
 
