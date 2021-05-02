@@ -1,9 +1,12 @@
 package com.atakmap.android.cot_utility.receivers;
 
-import android.app.Activity;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+
+
+
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -11,6 +14,7 @@ import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.NumberPicker;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -34,9 +38,13 @@ public class SettingsReceiver extends DropDownReceiver {
 
     private Switch enableReceiveButton;
     private Switch abbreviateCotSwitch;
+    private Switch autoBroadcastSwitch;
     private Switch enableTNCSwitch;
     private Switch sharedSecretSwitch;
     private TextView sharedSecretTV;
+
+    private NumberPicker autoBroadcastNP;
+
     private ModemCotUtility modemCotUtility;
     private Context context;
 
@@ -53,6 +61,8 @@ public class SettingsReceiver extends DropDownReceiver {
 
         enableReceiveButton = settingsView.findViewById(R.id.enableReceiveCoTFromModem);
         abbreviateCotSwitch = settingsView.findViewById(R.id.abbreviateCot);
+        autoBroadcastSwitch = settingsView.findViewById(R.id.autoBroadcast);
+        autoBroadcastNP = settingsView.findViewById(R.id.autoBroadcastNP);
 
         // TNC
         enableTNCSwitch = settingsView.findViewById(R.id.TNC);
@@ -78,7 +88,7 @@ public class SettingsReceiver extends DropDownReceiver {
 
     @Override
     public void onReceive(final Context context, Intent intent) {
-        if(intent == null) {
+        if (intent == null) {
             android.util.Log.w(TAG, "Doing nothing, because intent was null");
             return;
         }
@@ -109,9 +119,9 @@ public class SettingsReceiver extends DropDownReceiver {
                 }
             });
 
-            if(ModemCotUtility.usePSK){
+            if (ModemCotUtility.usePSK) {
                 sharedSecretSwitch.setChecked(true);
-            }else{
+            } else {
                 sharedSecretSwitch.setChecked(false);
             }
 
@@ -119,9 +129,11 @@ public class SettingsReceiver extends DropDownReceiver {
                 @Override
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
                 }
+
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 }
+
                 @Override
                 public void afterTextChanged(Editable s) {
                     Log.d(TAG, String.format("PSK Text: %s", s.toString()));
@@ -144,18 +156,18 @@ public class SettingsReceiver extends DropDownReceiver {
                 }
             });
 
-            if(ModemCotUtility.useAbbreviatedCoT){
+            if (ModemCotUtility.useAbbreviatedCoT) {
                 abbreviateCotSwitch.setChecked(true);
-            }else{
+            } else {
                 abbreviateCotSwitch.setChecked(false);
             }
 
             enableReceiveButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                    if(b && !modemCotUtility.isReceiving()){
+                    if (b && !modemCotUtility.isReceiving()) {
                         modemCotUtility.startListener();
-                    }else if(modemCotUtility.isReceiving()){
+                    } else if (modemCotUtility.isReceiving()) {
                         modemCotUtility.stopListener();
                     }
 
@@ -166,16 +178,16 @@ public class SettingsReceiver extends DropDownReceiver {
                 }
             });
 
-            if(modemCotUtility.isReceiving()){
+            if (modemCotUtility.isReceiving()) {
                 enableReceiveButton.setChecked(true);
-            }else{
+            } else {
                 enableReceiveButton.setChecked(false);
             }
 
             enableTNCSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                    ModemCotUtility.useTNC  = b;
+                    ModemCotUtility.useTNC = b;
 
                     SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
                     SharedPreferences.Editor editor = sharedPref.edit();
@@ -184,7 +196,7 @@ public class SettingsReceiver extends DropDownReceiver {
                 }
             });
 
-            if(ModemCotUtility.useTNC) {
+            if (ModemCotUtility.useTNC) {
                 enableTNCSwitch.setChecked(true);
 
                 if (!ModemCotUtility.aprsdroid_running) {
@@ -192,7 +204,7 @@ public class SettingsReceiver extends DropDownReceiver {
                     Intent i = new Intent("org.aprsdroid.app.SERVICE").setPackage("org.aprsdroid.app");
                     PluginLifecycle.activity.getApplicationContext().startForegroundService(i);
                 }
-            } else{
+            } else {
                 enableTNCSwitch.setChecked(false);
                 /*
                 if (ModemCotUtility.aprsdroid_running) {
@@ -223,10 +235,54 @@ public class SettingsReceiver extends DropDownReceiver {
                 }
            });
  */
-         }
+            final String[] delays = new String[]{"1", "5", "10", "15", "30", "60", "90", "120", "240", "480", "960", "1440"};
+            autoBroadcastNP.setDisplayedValues(null);
+            autoBroadcastNP.setMinValue(0);
+            autoBroadcastNP.setMaxValue(delays.length - 1);
+            autoBroadcastNP.setDisplayedValues(delays);
+            autoBroadcastNP.setValue(3);
+
+            autoBroadcastSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    if (b && !modemCotUtility.isAutoBroadcasting()) {
+                        modemCotUtility.startABListener();
+                        autoBroadcastNP.setEnabled(false);
+                    } else if (modemCotUtility.isAutoBroadcasting()) {
+                        modemCotUtility.stopABListener();
+                        autoBroadcastNP.setEnabled(true);
+                    }
+                }
+            });
+
+            if (modemCotUtility.isAutoBroadcasting()) {
+                autoBroadcastSwitch.setChecked(true);
+                autoBroadcastNP.setEnabled(false);
+            } else {
+                autoBroadcastSwitch.setChecked(false);
+                autoBroadcastNP.setEnabled(true);
+            }
+
+            autoBroadcastNP.setOnScrollListener(new NumberPicker.OnScrollListener() {
+                SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPref.edit();
+
+                @Override
+                public void onScrollStateChange(NumberPicker picker, int scrollState) {
+                    int newVal = picker.getValue();
+                    if (scrollState == NumberPicker.OnScrollListener.SCROLL_STATE_IDLE) {
+                        Log.d(TAG, "IDLE");
+                        newVal = picker.getValue();
+                        Log.d(TAG, String.format("AutoBroadcast Interval: %s", delays[newVal]));
+                        editor.putInt("autoBroadcastInterval", Integer.parseInt(delays[newVal])); // convert to minutes for Thread.sleep()
+                        editor.apply();
+                    }
+                }
+            });
+        }
     }
 
-    protected boolean onBackButtonPressed() {
+   protected boolean onBackButtonPressed() {
         DropDownManager.getInstance().clearBackStack();
         DropDownManager.getInstance().removeFromBackStack();
         intent.setAction(CoTUtilityDropDownReceiver.SHOW_PLUGIN);

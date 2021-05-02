@@ -16,6 +16,7 @@ import utils.MapItems;
 import utils.ModemCotUtility;
 
 import com.atakmap.android.cot_utility.receivers.APRSdroidEventReceiver;
+
 import com.atakmap.android.cot_utility.receivers.ReadMeReceiver;
 import com.atakmap.android.cot_utility.receivers.SendChatDropDownReceiver;
 import com.atakmap.android.cot_utility.receivers.SettingsReceiver;
@@ -41,9 +42,7 @@ import com.atakmap.comms.app.TLSUtils;
 import com.atakmap.coremap.cot.event.CotEvent;
 import com.atakmap.coremap.log.Log;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
+
 
 public class CoTUtilityMapComponent extends DropDownMapComponent implements CotUtil.CotEventListener,  CotServiceRemote.CotEventListener, MapEventDispatcher.MapEventDispatchListener {
 
@@ -75,7 +74,6 @@ public class CoTUtilityMapComponent extends DropDownMapComponent implements CotU
         CotUtil.setCotEventListener(this);
 
         CommsMapComponent.getInstance().addOnCotEventListener(this);
-
 
         ModemCotUtility modemCotUtility = ModemCotUtility.getInstance(view, context);
 
@@ -119,7 +117,6 @@ public class CoTUtilityMapComponent extends DropDownMapComponent implements CotU
 
         SettingsReceiver settingsReceiver = new SettingsReceiver(view, context);
         registerReceiverUsingPluginContext(pluginContext, "settings receiver", settingsReceiver, SettingsReceiver.SETTINGS_RECEIVER);
-
     }
 
 
