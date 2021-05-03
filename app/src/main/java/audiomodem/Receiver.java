@@ -205,10 +205,12 @@ public class Receiver extends AsyncTask<Void, Double, Result> {
                     cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(iv));
                     // don't decrypt the IV
                     String str = new String(cipher.doFinal(Arrays.copyOfRange(output.toByteArray(), 16, output.toByteArray().length)), "UTF-8");
+                    /*
                     if (!str.contains("chat@@@")) {
                         // COT have problems
                         str = str.substring(str.indexOf("<?xml"),str.length());
                     }
+                    */
                     return new Result(str, null);
                 } catch (Exception e) {
                     Log.d(TAG, "Decrypt PSK problem: " + e);

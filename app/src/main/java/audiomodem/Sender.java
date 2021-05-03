@@ -80,8 +80,9 @@ public class Sender extends AsyncTask<String, Double, Void> {
 
         OutputBuffer buf = new OutputBuffer();
         byte[] data = params[0].getBytes();
-        // strip the padding when using TNC
+        // strip the padding
         String encodedString = params[0].substring(modemCotUtility.padding.length());
+        ByteBuffer payload = ByteBuffer.allocate(0);
 
         if (modemCotUtility.usePSK) {
             Log.i(TAG, "PSK enabled");
@@ -102,40 +103,46 @@ public class Sender extends AsyncTask<String, Double, Void> {
                 SecretKeySpec key = new SecretKeySpec(PSKhash, "AES");
                 cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(iv));
                 cipherText = cipher.doFinal(encodedString.getBytes("UTF-8"));
+
                 // set the iv+cipherText as the payload
-                ByteBuffer payload = ByteBuffer.allocate(iv.length + cipherText.length);
+                payload = ByteBuffer.allocate(iv.length + cipherText.length);
                 payload.put(iv);
                 payload.put(cipherText);
 
-                if (ModemCotUtility.useTNC) {
-
-                    if (!ModemCotUtility.aprsdroid_running) {
-                        // make sure APRSDroid is running
-                        Intent i = new Intent("org.aprsdroid.app.SERVICE").setPackage("org.aprsdroid.app");
-                        PluginLifecycle.activity.getApplicationContext().startForegroundService(i);
-                    }
-
-                    encodedString = Base64.encodeToString(payload.array(), Base64.NO_WRAP);
-
-                    modemCotUtility.stopListener();
-
-                    // send off to TNC
-                    Intent i = new Intent("org.aprsdroid.app.SEND_PACKET").setPackage("org.aprsdroid.app");
-                    // ")" == APRSTypes.T_ITEM
-                    // "CALLSIGN!" to make it through javAPRSlib parseBody()
-                    i.putExtra("data", ")" + MapView.getMapView().getDeviceCallsign() + "!".concat(encodedString));
-                    PluginLifecycle.activity.getApplicationContext().startForegroundService(i);
-
-                    modemCotUtility.startListener();
-
-                    return null;
-                } else {
+                // if using PSK but not TNC, setup for the audiomodem
+                if (!modemCotUtility.useTNC) {
                     data = payload.array();
                 }
             } catch (Exception e) {
                 Log.d(TAG, "Encrypt PSK problem: " + e);
                 return null;
             }
+        }
+
+        if (modemCotUtility.useTNC) {
+
+            if (!modemCotUtility.aprsdroid_running) {
+                // make sure APRSDroid is running
+                Intent i = new Intent("org.aprsdroid.app.SERVICE").setPackage("org.aprsdroid.app");
+                PluginLifecycle.activity.getApplicationContext().startForegroundService(i);
+            }
+
+            if (modemCotUtility.usePSK) {
+                encodedString = Base64.encodeToString(payload.array(), Base64.NO_WRAP);
+            }
+
+            modemCotUtility.stopListener();
+
+            // send off to TNC
+            Intent i = new Intent("org.aprsdroid.app.SEND_PACKET").setPackage("org.aprsdroid.app");
+            // ")" == APRSTypes.T_ITEM
+            // "CALLSIGN!" to make it through javAPRSlib parseBody()
+            i.putExtra("data", ")" + MapView.getMapView().getDeviceCallsign() + "!".concat(encodedString));
+            PluginLifecycle.activity.getApplicationContext().startForegroundService(i);
+
+            modemCotUtility.startListener();
+
+            return null;
         }
 
         Log.i(TAG, "Sending " + data.length + " bytes");
