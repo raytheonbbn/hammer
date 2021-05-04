@@ -127,9 +127,7 @@ public class Sender extends AsyncTask<String, Double, Void> {
                 PluginLifecycle.activity.getApplicationContext().startForegroundService(i);
             }
 
-            if (modemCotUtility.usePSK) {
                 encodedString = Base64.encodeToString(payload.array(), Base64.NO_WRAP);
-            }
 
             modemCotUtility.stopListener();
 
