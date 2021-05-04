@@ -93,9 +93,12 @@ public class APRSdroidEventReceiver extends BroadcastReceiver {
 						}
 					}
 
-					// with no PSK just split at the ")NAME!" and parse the second half
-					// dont forget to B64 decode it first
-					packet = Base64.decode((packet.split("\\!")[1]).getBytes("UTF-8"), Base64.NO_WRAP).toString();
+					// strip off the cruft that made APRSDroid happy
+					packet = packet.substring(packet.indexOf("!")+1);
+					Log.i(TAG, String.format("split packet %s", packet));
+					// B64 decode it and pass it on
+					packet = new String(Base64.decode(packet, Base64.NO_WRAP), "UTF-8");
+					Log.i(TAG, String.format("decoded packet %s", packet));
 					ModemCotUtility.getInstance(MapView.getMapView(), context).parseCoT(packet);
 				} catch (Exception e) {
 				}

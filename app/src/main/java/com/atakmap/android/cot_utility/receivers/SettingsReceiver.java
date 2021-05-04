@@ -204,10 +204,10 @@ public class SettingsReceiver extends DropDownReceiver {
                 }
             });
 
-            if (ModemCotUtility.useTNC) {
+            if (modemCotUtility.useTNC) {
                 enableTNCSwitch.setChecked(true);
 
-                if (!ModemCotUtility.aprsdroid_running) {
+                if (!modemCotUtility.aprsdroid_running) {
                     // make sure APRSDroid is running
                     Intent i = new Intent("org.aprsdroid.app.SERVICE").setPackage("org.aprsdroid.app");
                     PluginLifecycle.activity.getApplicationContext().startForegroundService(i);
@@ -215,7 +215,7 @@ public class SettingsReceiver extends DropDownReceiver {
             } else {
                 enableTNCSwitch.setChecked(false);
                 /*
-                if (ModemCotUtility.aprsdroid_running) {
+                if (modemCotUtility.aprsdroid_running) {
                     // make sure APRSDroid is stopped
                     Intent i = new Intent("org.aprsdroid.app.SERVICE_STOP").setPackage("org.aprsdroid.app");
                     PluginLifecycle.activity.getApplicationContext().startForegroundService(i);

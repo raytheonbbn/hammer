@@ -127,8 +127,18 @@ public class Sender extends AsyncTask<String, Double, Void> {
                 PluginLifecycle.activity.getApplicationContext().startForegroundService(i);
             }
 
-                encodedString = Base64.encodeToString(payload.array(), Base64.NO_WRAP);
-
+            try {
+                if (modemCotUtility.usePSK) {
+                    encodedString = Base64.encodeToString(payload.array(), Base64.NO_WRAP);
+                    Log.i(TAG, String.format("encodedString PSK: %s", encodedString));
+                } else {
+                    encodedString = Base64.encodeToString(encodedString.getBytes("UTF-8"), Base64.NO_WRAP);
+                    Log.i(TAG, String.format("encodedString no PSK: %s", encodedString));
+                }
+            } catch (Exception e) {
+                Log.d(TAG, "TNC Base64 problem: " + e);
+                return null;
+            }
             modemCotUtility.stopListener();
 
             // send off to TNC
