@@ -1,51 +1,137 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:scrollbarAlwaysDrawVerticalTrack="true"
+    android:scrollbars="vertical">
+
     <LinearLayout
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#444444">
-        <ImageButton
-            android:id="@+id/backButtonSettingsView"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:src="@drawable/back_arrow"
-            android:background="#444444"/>
-        <TextView
-            android:id="@+id/subheader"
-            android:layout_weight="1"
-            android:layout_width="0dp"
+        android:layout_height="fill_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
             android:background="#444444"
-            android:paddingStart="10dp"
-            android:paddingTop="10dp"
-            android:paddingEnd="0dp"
-            android:paddingBottom="10dp"
-            android:text="Settings"
-            android:textColor="@color/white"
-            android:textSize="20sp" />
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/backButtonSettingsView"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="#444444"
+                android:src="@drawable/back_arrow" />
+
+            <TextView
+                android:id="@+id/subheader"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_weight="1"
+                android:background="#444444"
+                android:paddingStart="10dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="0dp"
+                android:paddingBottom="10dp"
+                android:text="Settings"
+                android:textColor="@color/white"
+                android:textSize="20sp" />
+
+        </LinearLayout>
+
+        <Switch
+            android:id="@+id/enableReceiveCoTFromModem"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="10dp"
+            android:checked="true"
+            android:text="Enable Receive" />
+
+        <Switch
+            android:id="@+id/abbreviateCot"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:checked="true"
+            android:text="Abbreviate CoT" />
+
+        <Switch
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:text="Slow VOX"
+            android:id="@+id/slowVox"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:checked="false"/>
+
+        <Switch
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:text="Use APRSDroid TNC"
+            android:id="@+id/TNC"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:checked="false"/>
+<!--
+        <EditText
+            android:id="@+id/frequency"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:background="@color/white"
+            android:ems="10"
+            android:hint="Set APRS Frequency field"
+            android:inputType="textPersonName"
+            android:textColor="#000000" />
+-->
+        <Switch
+            android:id="@+id/sharedSecret"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:checked="false"
+            android:text="Use Pre Shared Key" />
+
+        <EditText
+            android:id="@+id/sharedSecretText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:background="@color/white"
+            android:ems="10"
+            android:hint="Enter PSK here"
+            android:inputType="textPersonName"
+            android:textColor="#000000" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Switch
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:text="Auto Beacon"
+                android:id="@+id/autoBroadcast"
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:checked="false"/>
+
+            <NumberPicker
+                android:layout_marginRight="10dp"
+                android:id="@+id/autoBroadcastNP"
+                android:layout_width="match_parent"
+                android:layout_height="75dp" />
+
+        </LinearLayout>
     </LinearLayout>
-
-    <Switch
-        android:layout_marginTop="10dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:text="Enable Receive"
-        android:id="@+id/enableReceiveCoTFromModem"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:checked="true"/>
-
-    <Switch
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
-        android:text="Abbreviate CoT"
-        android:id="@+id/abbreviateCot"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:checked="true"/>
-
-</LinearLayout>
+</ScrollView>

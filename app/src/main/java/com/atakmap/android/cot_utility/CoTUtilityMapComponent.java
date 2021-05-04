@@ -3,6 +3,7 @@ package com.atakmap.android.cot_utility;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
@@ -13,6 +14,8 @@ import com.atakmap.android.cot_utility.plugin.PluginTool;
 import utils.CotUtil;
 import utils.MapItems;
 import utils.ModemCotUtility;
+
+import com.atakmap.android.cot_utility.receivers.APRSdroidEventReceiver;
 
 import com.atakmap.android.cot_utility.receivers.ReadMeReceiver;
 import com.atakmap.android.cot_utility.receivers.SendChatDropDownReceiver;
@@ -39,9 +42,7 @@ import com.atakmap.comms.app.TLSUtils;
 import com.atakmap.coremap.cot.event.CotEvent;
 import com.atakmap.coremap.log.Log;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
+
 
 public class CoTUtilityMapComponent extends DropDownMapComponent implements CotUtil.CotEventListener,  CotServiceRemote.CotEventListener, MapEventDispatcher.MapEventDispatchListener {
 
@@ -74,7 +75,6 @@ public class CoTUtilityMapComponent extends DropDownMapComponent implements CotU
 
         CommsMapComponent.getInstance().addOnCotEventListener(this);
 
-
         ModemCotUtility modemCotUtility = ModemCotUtility.getInstance(view, context);
 
         DocumentedIntentFilter filter = new DocumentedIntentFilter();
@@ -97,6 +97,14 @@ public class CoTUtilityMapComponent extends DropDownMapComponent implements CotU
 
         ModemCotUtility.useAbbreviatedCoT = useAbbreviated;
 
+        Log.d(TAG, "Registering aprs receiver with intent filter");
+        APRSdroidEventReceiver aprsDroidReceiver = new APRSdroidEventReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("org.aprsdroid.app.SERVICE_STARTED");
+        intentFilter.addAction("org.aprsdroid.app.SERVICE_STOPPED");
+        intentFilter.addAction("org.aprsdroid.app.MESSAGE");
+        intentFilter.addAction("org.aprsdroid.app.POSITION");
+        pluginContext.registerReceiver(aprsDroidReceiver, intentFilter);
 
         ReadMeReceiver readMeReceiver = new ReadMeReceiver(view, context);
         registerReceiverUsingPluginContext(pluginContext, "readme receiver", readMeReceiver, ReadMeReceiver.SHOW_README);
@@ -109,7 +117,6 @@ public class CoTUtilityMapComponent extends DropDownMapComponent implements CotU
 
         SettingsReceiver settingsReceiver = new SettingsReceiver(view, context);
         registerReceiverUsingPluginContext(pluginContext, "settings receiver", settingsReceiver, SettingsReceiver.SETTINGS_RECEIVER);
-
     }
 
 

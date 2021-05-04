@@ -44,14 +44,14 @@
         android:layout_above="@+id/linearLayoutBottom"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-            <TextView
-                android:scrollbars = "vertical"
-                android:gravity="bottom"
-                android:minHeight="300dp"
-                android:id="@+id/messageHistoryText"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:text="From the dropdown menu, select a callsign to send to. Then type a message below." />
+        <TextView
+            android:scrollbars = "vertical"
+            android:gravity="bottom"
+            android:minHeight="300dp"
+            android:id="@+id/messageHistoryText"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="From the dropdown menu, select a callsign to send to. Then type a message below." />
 
     </LinearLayout>
 
@@ -60,12 +60,12 @@
         android:layout_alignParentBottom="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="horizontal">
         <EditText
             android:layout_marginLeft="10dp"
             android:layout_marginRight="10dp"
             android:id="@+id/editText"
-            android:layout_width="match_parent"
+            android:layout_width="200dp"
             android:layout_height="wrap_content"
             android:gravity="top|left"
             android:inputType="textMultiLine"
@@ -82,6 +82,7 @@
             android:layout_height="wrap_content"
             style="@style/darkButton"
             android:padding="10dp"
+            android:layout_marginBottom="10dp"
             android:layout_margin="10dp"/>
     </LinearLayout>
 

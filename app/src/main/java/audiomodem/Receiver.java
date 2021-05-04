@@ -1,5 +1,7 @@
 package audiomodem;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -7,7 +9,10 @@ import android.media.AudioRecordingConfiguration;
 import android.media.MediaRecorder;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.util.Base64;
 import android.util.Log;
+
+import com.atakmap.android.cot_utility.plugin.PluginLifecycle;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -17,11 +22,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import audiomodem.jmodem.InputSampleStream;
 import audiomodem.jmodem.Main;
+import utils.ModemCotUtility;
+
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  * Created by roman on 2/10/15.
@@ -45,9 +58,12 @@ public class Receiver extends AsyncTask<Void, Double, Result> {
     private volatile boolean stopFlag = false;
     protected AtomicBoolean cotReceived;
     private AudioRecord src;
+    private ModemCotUtility modemCotUtility;
 
-    public Receiver(AtomicBoolean cotReceived){
+    public Receiver(AtomicBoolean cotReceived, ModemCotUtility modemCotUtility){
+
         this.cotReceived = cotReceived;
+        this.modemCotUtility = modemCotUtility;
     }
 
     class InputStreamWrapper implements InputSampleStream {
@@ -169,8 +185,41 @@ public class Receiver extends AsyncTask<Void, Double, Result> {
         Log.i(TAG, "Received " + output.toByteArray().length + " bytes");
 
         try {
-            String str = new String(output.toByteArray(), "UTF-8");
-            return new Result(str, null);
+            if (modemCotUtility.usePSK) {
+                Log.i(TAG, "PSK enabled");
+                byte[] PSKhash;
+                SharedPreferences sharedPref = PluginLifecycle.activity.getSharedPreferences("hammer-prefs", Context.MODE_PRIVATE);
+                String psk = sharedPref.getString("PSKText", "");
+                try {
+                    MessageDigest digest = MessageDigest.getInstance("MD5");
+                    PSKhash = digest.digest(psk.getBytes());
+                } catch (Exception e) {
+                    Log.d(TAG, "Decrypt PSK Hashing problem: " + e);
+                    return null;
+                }
+                try {
+                    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                    SecretKeySpec key = new SecretKeySpec(PSKhash, "AES");
+                    // first 16 bytes are IV
+                    byte[] iv = Arrays.copyOf(output.toByteArray(),16);
+                    cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(iv));
+                    // don't decrypt the IV
+                    String str = new String(cipher.doFinal(Arrays.copyOfRange(output.toByteArray(), 16, output.toByteArray().length)), "UTF-8");
+                    /*
+                    if (!str.contains("chat@@@")) {
+                        // COT have problems
+                        str = str.substring(str.indexOf("<?xml"),str.length());
+                    }
+                    */
+                    return new Result(str, null);
+                } catch (Exception e) {
+                    Log.d(TAG, "Decrypt PSK problem: " + e);
+                    return null;
+                }
+            } else {
+                String str = new String(output.toByteArray(), "UTF-8");
+                return new Result(str, null);
+            }
         } catch (UnsupportedEncodingException e) {
             Log.e(TAG, "unicode decoding failed", e);
             return new Result(null, e.getMessage());
